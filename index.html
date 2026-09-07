@@ -36,7 +36,6 @@
       line-height: 1.6;
     }
 
-    /* ヘッダー */
     header {
       text-align: center;
       padding: 30px 20px 10px;
@@ -67,7 +66,6 @@
       padding: 20px;
     }
 
-    /* ガラスモフィズムカード */
     .card {
       background: var(--bg-card);
       backdrop-filter: blur(12px);
@@ -112,7 +110,6 @@
       box-shadow: 0 0 10px var(--lucero-gold);
     }
 
-    /* 入力フォーム & ボタン */
     .input-group {
       margin-bottom: 16px;
     }
@@ -154,7 +151,6 @@
       box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
     }
 
-    /* アコーディオン */
     details {
       background: rgba(11, 25, 44, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -195,7 +191,6 @@
       color: var(--lucero-gold);
     }
 
-    /* グリッドレイアウト（項目表示） */
     .metric-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -226,7 +221,6 @@
       color: #FFFFFF;
     }
 
-    /* 〇✕判定バッジ */
     .badge-ok {
       color: #070D18;
       background: var(--lucero-gold);
@@ -248,9 +242,6 @@
       width: fit-content;
     }
 
-    /* ==========================================
-       ローディング画面のスタイル (サッカーボール回転)
-       ========================================== */
     #loading-overlay {
       position: fixed;
       top: 0;
@@ -301,7 +292,6 @@
 </head>
 <body>
 
-  <!-- ローディング表示（初期状態は隠す） -->
   <div id="loading-overlay" class="hidden">
     <div class="ball-spinner">⚽</div>
     <div class="loading-text">NOW LOADING...</div>
@@ -314,7 +304,6 @@
 
   <div class="container">
     
-    <!-- ログイン画面 -->
     <div id="login-view" class="card" style="max-width: 400px; margin: 40px auto;">
       <h2 style="justify-content: center;">ATHLETE LOGIN</h2>
       <div class="input-group">
@@ -326,26 +315,22 @@
       <button id="loginBtn" onclick="handleLogin()">ログイン</button>
     </div>
 
-    <!-- ダッシュボード画面 -->
     <div id="dashboard" class="hidden">
       <div style="text-align: center; margin-bottom: 24px;">
         <h1 id="welcome-msg" style="font-size: 24px; color: #FFFFFF; margin: 0; font-weight: 900;"></h1>
         <p style="color: var(--text-sub); font-size: 13px; margin-top: 4px;">フィジカル測定データ & パフォーマンス変遷</p>
       </div>
 
-      <!-- 最新の記録 -->
       <div class="card">
         <h2>LATEST RECORD (<span id="latest-date" style="color: var(--lucero-gold);">-</span>)</h2>
         <div id="latest-metrics" class="metric-grid"></div>
       </div>
 
-      <!-- 過去の記録（アコーディオン） -->
       <div class="card">
         <h2>MEASUREMENT HISTORY</h2>
         <div id="history-accordion"></div>
       </div>
 
-      <!-- 成績の変遷（グラフ） -->
       <div class="card">
         <h2>PERFORMANCE CHART</h2>
         <div class="input-group">
@@ -372,6 +357,14 @@
     document.getElementById('loading-overlay').classList.add('hidden');
   }
 
+  // 文字列日付（例: "2026年4月14日" や "2025年5月29日"）を解析してエポックミリ秒を返すヘルパー関数
+  function getTimeFromDateStr(str) {
+    if (!str) return 0;
+    const clean = str.replace(/年|月/g, '/').replace(/日/g, '').replace(/\./g, '/').trim();
+    const t = new Date(clean).getTime();
+    return isNaN(t) ? 0 : t;
+  }
+
   async function handleLogin() {
     const userId = document.getElementById('userId').value;
     const password = document.getElementById('password').value;
@@ -381,7 +374,7 @@
       return;
     }
 
-    showLoading(); // ローディング開始
+    showLoading();
 
     try {
       const res = await fetch(GAS_URL, {
@@ -391,7 +384,6 @@
       const result = await res.json();
 
       if (result.success) {
-        // データ読み込み（非同期処理）
         await loadDashboardData(userId);
         document.getElementById('login-view').classList.add('hidden');
         document.getElementById('dashboard').classList.remove('hidden');
@@ -401,7 +393,7 @@
     } catch(e) {
       alert("通信エラーが発生しました");
     } finally {
-      hideLoading(); // ローディング終了
+      hideLoading();
     }
   }
 
@@ -418,6 +410,13 @@
       document.getElementById('welcome-msg').innerText = `${playerData.name} 選手`;
 
       if (playerData.history && playerData.history.length > 0) {
+        // history配列を日付の降順（最新日付が必ず先頭[0]）に安全にソート
+        playerData.history.sort((a, b) => {
+          const timeA = a.timestamp || getTimeFromDateStr(a.date);
+          const timeB = b.timestamp || getTimeFromDateStr(b.date);
+          return timeB - timeA;
+        });
+
         renderLatest(playerData.history[0]);
         renderAccordion(playerData.history);
         setupMetricSelect(playerData.history);
@@ -501,8 +500,13 @@
     const selectedMetric = document.getElementById('metricSelect').value;
     if (!selectedMetric || !playerData || !playerData.history) return;
 
-    // 最新順から古い順（昇順）に変換して、左から右へ最新の日付になるように配置
-    const chronologicalHistory = [...playerData.history].reverse();
+    // グラフ用には昇順（古い日付→新しい日付、左から右）に並び替える
+    const chronologicalHistory = playerData.history.slice().sort((a, b) => {
+      const timeA = a.timestamp || getTimeFromDateStr(a.date);
+      const timeB = b.timestamp || getTimeFromDateStr(b.date);
+      return timeA - timeB;
+    });
+
     const labels = [];
     const dataPoints = [];
 
