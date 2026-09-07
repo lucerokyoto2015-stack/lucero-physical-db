@@ -123,6 +123,11 @@
       transition: all 0.3s ease;
     }
 
+    input[type="text"]:focus, input[type="password"]:focus {
+      border-color: var(--lucero-gold);
+      box-shadow: 0 0 10px var(--lucero-gold-glow);
+    }
+
     button {
       padding: 12px 20px;
       background: linear-gradient(135deg, var(--lucero-gold) 0%, var(--lucero-gold-dark) 100%);
@@ -215,12 +220,12 @@
     .loading-text { font-family: 'Orbitron', sans-serif; font-size: 18px; color: var(--lucero-gold); margin-top: 10px; }
 
     @keyframes spinBall { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <div id="loading-overlay" class="hidden">
+  <!-- ローディング表示（初期状態は非表示） -->
+  <div id="loading-overlay" style="display: none;">
     <div class="ball-spinner">⚽</div>
     <div class="loading-text">NOW LOADING...</div>
   </div>
@@ -232,8 +237,8 @@
 
   <div class="container">
     
-    <!-- ログイン画面 -->
-    <div id="login-view" class="card" style="max-width: 400px; margin: 40px auto;">
+    <!-- ★ ログイン画面 (初期表示) ★ -->
+    <div id="login-view" class="card" style="max-width: 400px; margin: 40px auto; display: block;">
       <h2 style="justify-content: center;">ATHLETE LOGIN</h2>
       <div class="input-group">
         <input type="text" id="userId" placeholder="ユーザーID (または選手名)">
@@ -244,12 +249,13 @@
       <button style="width:100%;" onclick="handleLogin()">ログイン</button>
     </div>
 
-    <!-- ダッシュボード -->
-    <div id="dashboard" class="hidden">
+    <!-- ★ ダッシュボード (ログイン前は非表示) ★ -->
+    <div id="dashboard" style="display: none;">
       
-      <div style="text-align: center; margin-bottom: 24px;">
+      <div style="text-align: center; margin-bottom: 24px; position: relative;">
         <h1 id="welcome-msg" style="font-size: 26px; color: #FFFFFF; margin: 0; font-weight: 900;"></h1>
         <p style="color: var(--text-sub); font-size: 13px; margin-top: 4px;">フィジカル測定データ & パフォーマンス変遷</p>
+        <button onclick="logout()" style="position: absolute; right: 0; top: 0; padding: 6px 12px; font-size: 12px;">ログアウト</button>
       </div>
 
       <!-- LATEST RECORD -->
@@ -284,8 +290,8 @@
   const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec"; 
   let playerData = null;
 
-  function showLoading() { document.getElementById('loading-overlay').classList.remove('hidden'); }
-  function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
+  function showLoading() { document.getElementById('loading-overlay').style.display = 'flex'; }
+  function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
 
   function getTimeFromDateStr(str) {
     if (!str) return 0;
@@ -314,16 +320,24 @@
 
       if (result.success) {
         await loadDashboardData(userId);
-        document.getElementById('login-view').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
+        document.getElementById('login-view').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
       } else {
-        alert(result.message);
+        alert(result.message || "ログイン資格情報が正しくありません");
       }
     } catch(e) {
       alert("通信エラーが発生しました");
     } finally {
       hideLoading();
     }
+  }
+
+  function logout() {
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('login-view').style.display = 'block';
+    document.getElementById('userId').value = '';
+    document.getElementById('password').value = '';
+    playerData = null;
   }
 
   async function loadDashboardData(userId) {
