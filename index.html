@@ -348,10 +348,11 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec";
 
-    // グラフ表示対象の項目定義（全角数字・改行・「三段」「3段」「三段跳」などの揺れを全てカバー）
+    // グラフ表示対象の項目定義（BMIを追加）
     const TARGET_GRAPH_METRICS = [
       { keyKeywords: ["身長"], title: "身長 (cm)" },
       { keyKeywords: ["体重"], title: "体重 (kg)" },
+      { keyKeywords: ["bmi", "ｂｍｉ"], title: "BMI" },
       { keyKeywords: ["立ち幅跳び", "立ち幅跳", "立ち幅"], title: "立ち幅跳び" },
       { keyKeywords: ["三段跳び", "三段跳", "三段飛び", "3段跳び", "3段跳", "3段飛び", "３段跳び", "３段跳", "３段飛び", "三段", "3段", "３段"], title: "三段跳び" },
       { keyKeywords: ["400m", "400"], title: "20mシャトル 400m" },
@@ -360,7 +361,7 @@
 
     let chartInstances = [];
 
-    // ヘッダー文字列の正規化処理（全角→半角、改行・スペース除去）
+    // ヘッダー文字列の正規化（全角→半角、大文字→小文字、改行削除）
     function normalizeHeader(str) {
       if (!str) return '';
       return str
@@ -372,16 +373,14 @@
         .trim();
     }
 
-    // 数値文字列から単位などを取り除き、数値に変換する関数
+    // 数値抽出関数（単位等の文字列が入っていても数値のみ抽出）
     function parseNumericValue(val) {
       if (val === undefined || val === null || val === '') return null;
       if (typeof val === 'number') return isNaN(val) ? null : val;
       
-      // 全角数字を半角数字に変換
       let cleanStr = String(val).replace(/[０-９]/g, function(s) {
         return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
       });
-      // 数値と小数点以外を削除（例: "7.20m" -> "7.20"）
       let match = cleanStr.match(/-?\d+(\.\d+)?/);
       if (match) {
         let num = parseFloat(match[0]);
@@ -557,7 +556,7 @@
       const dates = history.map(h => h.date);
 
       TARGET_GRAPH_METRICS.forEach(target => {
-        // キーワード照合（改行・全角半角を揃えて比較）
+        // キーワード照合（改行・全角半角・大文字小文字を考慮してマッチング）
         const matchedHeader = headerList.find(h => {
           const normH = normalizeHeader(h);
           return target.keyKeywords.some(kw => normH.includes(normalizeHeader(kw)));
@@ -565,7 +564,7 @@
 
         if (!matchedHeader) return;
 
-        // 本人データの抽出（文字・単位を除去して数値化）
+        // 本人データの抽出
         const userValues = history.map(h => {
           const val = h.metrics[matchedHeader];
           return parseNumericValue(val);
@@ -579,7 +578,7 @@
           return null;
         });
 
-        // 有効な数値データが全くない場合はグラフを表示しない
+        // 有効な数値データがない場合はスキップ
         if (!userValues.some(v => v !== null)) return;
 
         // DOM構築
