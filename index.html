@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LUCERO KYOTO | Physical Analytics</title>
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,6 +20,8 @@
       --text-main: #F8FAFC;
       --text-sub: #94A3B8;
       --border-glow: rgba(255, 215, 0, 0.25);
+      --status-clear: #4ADE80;
+      --status-notclear: #F87171;
     }
 
     * { box-sizing: border-box; }
@@ -60,7 +61,7 @@
     }
 
     .container {
-      max-width: 950px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 20px;
     }
@@ -109,47 +110,10 @@
       box-shadow: 0 0 10px var(--lucero-gold);
     }
 
-    .input-group { margin-bottom: 16px; }
-
-    input[type="text"], input[type="password"], select {
-      width: 100%;
-      padding: 14px 16px;
-      background: rgba(7, 13, 24, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
-      color: #FFFFFF;
-      font-size: 15px;
-      outline: none;
-      transition: all 0.3s ease;
-    }
-
-    input[type="text"]:focus, input[type="password"]:focus {
-      border-color: var(--lucero-gold);
-      box-shadow: 0 0 10px var(--lucero-gold-glow);
-    }
-
-    button {
-      padding: 12px 20px;
-      background: linear-gradient(135deg, var(--lucero-gold) 0%, var(--lucero-gold-dark) 100%);
-      color: #070D18;
-      font-size: 15px;
-      font-weight: 800;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      letter-spacing: 1px;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px var(--lucero-gold-glow);
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
-    }
-
+    /* Metric Grid (LATEST RECORD) */
     .metric-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
       gap: 12px;
       margin-top: 14px;
     }
@@ -158,12 +122,169 @@
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 8px;
-      padding: 10px 12px;
+      padding: 12px;
     }
 
     .metric-label { font-size: 11px; color: var(--text-sub); display: block; margin-bottom: 4px; }
     .metric-value { font-size: 16px; font-weight: 700; color: #FFFFFF; }
 
+    /* CLEAR / NOT CLEAR 表記スタイリング */
+    .badge-clear {
+      color: var(--status-clear);
+      font-weight: 800;
+      text-shadow: 0 0 8px rgba(74, 222, 128, 0.3);
+    }
+
+    .badge-notclear {
+      color: var(--status-notclear);
+      font-weight: 800;
+      text-shadow: 0 0 8px rgba(248, 113, 113, 0.3);
+    }
+
+    /* Table Styling */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    th {
+      background: rgba(255, 215, 0, 0.1);
+      color: var(--lucero-gold);
+      padding: 10px 8px;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border-glow);
+    }
+
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      white-space: nowrap;
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 class="brand-title">LUCERO KYOTO</h1>
+    <div class="brand-subtitle">Physical Analytics</div>
+  </header>
+
+  <div class="container">
+    <!-- LATEST RECORD -->
+    <div class="card">
+      <h2 id="latest-title">LATEST RECORD</h2>
+      <div id="latest-grid" class="metric-grid"></div>
+    </div>
+
+    <!-- MEASUREMENT HISTORY -->
+    <div class="card">
+      <h2>MEASUREMENT HISTORY (全データ一覧)</h2>
+      <div class="table-container">
+        <table id="history-table">
+          <thead><tr id="table-header"></tr></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 値をCLEAR/NOT CLEARまたは数値フォーマットに変換する関数
+    function formatDisplayValue(val) {
+      if (val === undefined || val === null || val === '') return '-';
+      
+      if (val === 'CLEAR') {
+        return '<span class="badge-clear">CLEAR</span>';
+      }
+      if (val === 'NOT CLEAR' || val === 'NOTCLEAR') {
+        return '<span class="badge-notclear">NOT CLEAR</span>';
+      }
+
+      if (typeof val === 'number') {
+        return Number.isInteger(val) ? val : val.toFixed(1);
+      }
+
+      return val;
+    }
+
+    // 最新の非空値を過去に遡って探す関数
+    function getLatestValue(history, metricKey) {
+      for (let i = history.length - 1; i >= 0; i--) {
+        const val = history[i].metrics[metricKey];
+        if (val !== undefined && val !== null && val !== '') {
+          return val;
+        }
+      }
+      return null;
+    }
+
+    // データ反映メイン関数
+    function renderDashboard(data) {
+      if (!data || !data.history || data.history.length === 0) return;
+
+      const history = data.history;
+      const latestData = history[history.length - 1];
+
+      document.getElementById('latest-title').textContent = `LATEST RECORD ( ${latestData.date} )`;
+
+      // 1. 全ヘッダー項目の抽出
+      const allHeaders = new Set();
+      history.forEach(item => {
+        Object.keys(item.metrics).forEach(key => allHeaders.add(key));
+      });
+      const headerList = Array.from(allHeaders);
+
+      // 2. LATEST RECORD カードの描画
+      const latestGrid = document.getElementById('latest-grid');
+      latestGrid.innerHTML = '';
+
+      headerList.forEach(header => {
+        const val = getLatestValue(history, header);
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'metric-item';
+        itemDiv.innerHTML = `
+          <span class="metric-label">${header}</span>
+          <div class="metric-value">${formatDisplayValue(val)}</div>
+        `;
+        latestGrid.appendChild(itemDiv);
+      });
+
+      // 3. 全データ一覧テーブルの描画
+      const tableHeader = document.getElementById('table-header');
+      const tableBody = document.getElementById('table-body');
+
+      tableHeader.innerHTML = '<th>回数</th><th>測定日</th>' + headerList.map(h => `<th>${h}</th>`).join('');
+      tableBody.innerHTML = '';
+
+      history.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        let cells = `<td>第${idx + 1}回</td><td>${row.date}</td>`;
+        
+        headerList.forEach(h => {
+          const val = row.metrics[h];
+          cells += `<td>${formatDisplayValue(val)}</td>`;
+        });
+
+        tr.innerHTML = cells;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    // ※テスト用：デバッグデータが渡された場合のテスト自動実行
+    // 実際のGAS連携時は fetch の response データを renderDashboard(data) に渡してください。
+  </script>
+</body>
+</html>
     .badge-ok {
       color: #070D18; background: var(--lucero-gold);
       padding: 2px 8px; border-radius: 4px; font-weight: 900; font-size: 12px;
