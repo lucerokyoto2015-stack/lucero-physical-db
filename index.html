@@ -62,6 +62,20 @@
       margin-top: 4px;
     }
 
+    /* 選手名表示スタイルの追加 */
+    .athlete-name-display {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-top: 10px;
+      letter-spacing: 1px;
+    }
+
+    .athlete-name-display span {
+      color: var(--lucero-gold);
+      margin-left: 6px;
+    }
+
     .card {
       background: var(--bg-card);
       border: 1px solid var(--border-card);
@@ -300,6 +314,10 @@
     <div class="site-header">
       <h1 class="site-title">LUCERO KYOTO</h1>
       <div class="site-subtitle">PHYSICAL DATA ANALYTICS PORTAL</div>
+      <!-- 選手名表示領域（ログイン後に表示） -->
+      <div id="athlete-name-container" class="athlete-name-display" style="display: none;">
+        <span id="athlete-name">--</span>
+      </div>
     </div>
 
     <!-- ATHLETE LOGIN -->
@@ -348,7 +366,7 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec";
 
-    // グラフ表示対象の項目定義（BMIを追加）
+    // グラフ表示対象の項目定義
     const TARGET_GRAPH_METRICS = [
       { keyKeywords: ["身長"], title: "身長 (cm)" },
       { keyKeywords: ["体重"], title: "体重 (kg)" },
@@ -360,8 +378,8 @@
     ];
 
     let chartInstances = [];
+    let currentInputUserId = "";
 
-    // ヘッダー文字列の正規化（全角→半角、大文字→小文字、改行削除）
     function normalizeHeader(str) {
       if (!str) return '';
       return str
@@ -373,7 +391,6 @@
         .trim();
     }
 
-    // 数値抽出関数（単位等の文字列が入っていても数値のみ抽出）
     function parseNumericValue(val) {
       if (val === undefined || val === null || val === '') return null;
       if (typeof val === 'number') return isNaN(val) ? null : val;
@@ -419,6 +436,7 @@
     }
 
     function loadData(userId, password) {
+      currentInputUserId = userId;
       const loginView = document.getElementById('login-view');
       const loading = document.getElementById('loading');
       const loginError = document.getElementById('login-error');
@@ -467,6 +485,15 @@
     function renderApp(data) {
       const appContent = document.getElementById('app-content');
       if (appContent) appContent.style.display = 'block';
+
+      // 氏名の表示設定（GAS側で userName, name, nameKanji 等の返却に対応、なければ入力されたID/名前を表示）
+      const displayName = data.userName || data.name || data.nameKanji || data.userNameKanji || currentInputUserId;
+      const nameContainer = document.getElementById('athlete-name-container');
+      const nameEl = document.getElementById('athlete-name');
+      if (nameContainer && nameEl) {
+        nameEl.textContent = displayName;
+        nameContainer.style.display = 'block';
+      }
 
       const history = data.history;
       const latestData = history[history.length - 1];
@@ -556,7 +583,6 @@
       const dates = history.map(h => h.date);
 
       TARGET_GRAPH_METRICS.forEach(target => {
-        // キーワード照合（改行・全角半角・大文字小文字を考慮してマッチング）
         const matchedHeader = headerList.find(h => {
           const normH = normalizeHeader(h);
           return target.keyKeywords.some(kw => normH.includes(normalizeHeader(kw)));
@@ -564,13 +590,11 @@
 
         if (!matchedHeader) return;
 
-        // 本人データの抽出
         const userValues = history.map(h => {
           const val = h.metrics[matchedHeader];
           return parseNumericValue(val);
         });
 
-        // 期生中央値の抽出
         const medianValues = history.map(h => {
           if (mediansData && mediansData[h.date] && mediansData[h.date][matchedHeader] !== undefined) {
             return parseNumericValue(mediansData[h.date][matchedHeader]);
@@ -578,10 +602,8 @@
           return null;
         });
 
-        // 有効な数値データがない場合はスキップ
         if (!userValues.some(v => v !== null)) return;
 
-        // DOM構築
         const chartCard = document.createElement('div');
         chartCard.className = 'chart-card';
         
