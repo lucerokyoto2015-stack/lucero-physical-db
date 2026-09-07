@@ -3,220 +3,276 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LUCERO KYOTO Physical Analytics</title>
+  <title>LUCERO KYOTO | Physical Analytics</title>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Noto+Sans+JP:wght@400;600;700;900&display=swap" rel="stylesheet">
+  
   <style>
     :root {
-      --bg-dark: #0b1329;
-      --card-bg: #111c38;
-      --border-gold: #ffd700;
-      --text-main: #ffffff;
-      --text-sub: #a0aec0;
-      --accent-gold: #ffcc00;
-      --accent-blue: #3182ce;
+      --bg-dark: #070D18;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --lucero-navy: #0B192C;
+      --lucero-gold: #FFD700;
+      --lucero-gold-glow: rgba(255, 215, 0, 0.35);
+      --lucero-gold-dark: #CFA600;
+      --text-main: #F8FAFC;
+      --text-sub: #94A3B8;
+      --border-glow: rgba(255, 215, 0, 0.25);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-    }
+    * { box-sizing: border-box; }
 
     body {
-      background-color: var(--bg-dark);
+      font-family: 'Noto Sans JP', 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top center, #11223A 0%, var(--bg-dark) 70%);
+      min-height: 100vh;
       color: var(--text-main);
-      padding: 20px;
+      line-height: 1.6;
+    }
+
+    header {
+      text-align: center;
+      padding: 30px 20px 10px;
+    }
+
+    .brand-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: var(--lucero-gold);
+      text-transform: uppercase;
+      text-shadow: 0 0 15px var(--lucero-gold-glow);
+      margin: 0;
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: var(--text-sub);
+      letter-spacing: 2px;
+      margin-top: 4px;
+      text-transform: uppercase;
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 900px;
       margin: 0 auto;
+      padding: 20px;
     }
 
     .card {
-      background-color: var(--card-bg);
-      border: 1px solid #1e2d52;
-      border-radius: 12px;
-      padding: 20px;
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-glow);
+      border-radius: 16px;
+      padding: 24px;
       margin-bottom: 24px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
       position: relative;
+      overflow: hidden;
     }
 
-    /* 金色のグラデーション線枠 */
     .card::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0;
+      top: 0;
+      left: 0;
+      width: 100%;
       height: 3px;
-      background: linear-gradient(90deg, #ffd700, transparent);
-      border-top-left-radius: 12px;
-      border-top-right-radius: 12px;
+      background: linear-gradient(90deg, transparent, var(--lucero-gold), transparent);
     }
 
-    .section-title {
+    h2 {
       font-size: 18px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      margin-bottom: 16px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-top: 0;
+      margin-bottom: 18px;
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .section-title::before {
+    h2::before {
       content: '';
       display: inline-block;
       width: 4px;
       height: 18px;
-      background-color: var(--border-gold);
+      background: var(--lucero-gold);
+      border-radius: 2px;
+      box-shadow: 0 0 10px var(--lucero-gold);
     }
 
-    /* 検索バー */
-    .search-box {
-      display: flex;
-      gap: 12px;
-    }
+    .input-group { margin-bottom: 16px; }
 
-    input[type="text"] {
-      flex: 1;
-      padding: 12px 16px;
-      background-color: #0d162d;
-      border: 1px solid #2a3b63;
-      border-radius: 6px;
-      color: white;
-      font-size: 16px;
-    }
-
-    input[type="text"]:focus {
+    input[type="text"], input[type="password"], select {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(7, 13, 24, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #FFFFFF;
+      font-size: 15px;
       outline: none;
-      border-color: var(--border-gold);
+      transition: all 0.3s ease;
     }
 
     button {
-      background: linear-gradient(135deg, #ffd700, #cca100);
-      color: #000;
-      font-weight: bold;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, var(--lucero-gold) 0%, var(--lucero-gold-dark) 100%);
+      color: #070D18;
+      font-size: 15px;
+      font-weight: 800;
       border: none;
-      padding: 12px 24px;
-      border-radius: 6px;
-      font-size: 16px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: transform 0.1s, opacity 0.2s;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px var(--lucero-gold-glow);
     }
 
     button:hover {
-      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
     }
 
-    /* テーブルデザイン */
-    .table-container {
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .metric-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .metric-label { font-size: 11px; color: var(--text-sub); display: block; margin-bottom: 4px; }
+    .metric-value { font-size: 16px; font-weight: 700; color: #FFFFFF; }
+
+    .badge-ok {
+      color: #070D18; background: var(--lucero-gold);
+      padding: 2px 8px; border-radius: 4px; font-weight: 900; font-size: 12px;
+    }
+
+    .badge-ng {
+      color: #94A3B8; background: rgba(255, 255, 255, 0.1);
+      padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 12px;
+    }
+
+    .data-table-container {
       overflow-x: auto;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    table {
+    .history-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
-    }
-
-    th, td {
-      padding: 12px 16px;
+      font-size: 13px;
+      color: #FFFFFF;
       text-align: center;
-      border-bottom: 1px solid #1c2b4d;
-      font-size: 14px;
     }
 
-    th {
-      background-color: #162345;
-      color: var(--accent-gold);
-      font-weight: bold;
+    .history-table th, .history-table td {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 10px 12px;
+      white-space: nowrap;
     }
 
-    tr:hover {
-      background-color: #18284c;
+    .history-table th {
+      background: rgba(255, 215, 0, 0.15);
+      color: var(--lucero-gold);
+      font-weight: 700;
     }
 
-    /* グラフ・セレクトボックス */
-    .select-box {
-      margin-bottom: 16px;
+    .history-table tbody tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
     }
 
-    select {
-      padding: 8px 12px;
-      background-color: #0d162d;
-      color: white;
-      border: 1px solid #2a3b63;
-      border-radius: 6px;
-      font-size: 14px;
+    .history-table tbody tr:hover {
+      background: rgba(255, 215, 0, 0.05);
     }
 
-    .chart-container {
-      position: relative;
-      height: 350px;
-      width: 100%;
+    #loading-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(7, 13, 24, 0.9); backdrop-filter: blur(10px);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      z-index: 9999;
     }
 
-    .loading {
-      display: none;
-      text-align: center;
-      padding: 20px;
-      color: var(--accent-gold);
-    }
+    .ball-spinner { font-size: 56px; animation: spinBall 1.2s linear infinite; }
+    .loading-text { font-family: 'Orbitron', sans-serif; font-size: 18px; color: var(--lucero-gold); margin-top: 10px; }
+
+    @keyframes spinBall { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
+  <div id="loading-overlay" class="hidden">
+    <div class="ball-spinner">⚽</div>
+    <div class="loading-text">NOW LOADING...</div>
+  </div>
+
+  <header>
+    <div class="brand-title">LUCERO KYOTO</div>
+    <div class="brand-subtitle">Physical Data Analytics Portal</div>
+  </header>
+
   <div class="container">
     
-    <!-- 検索カード -->
-    <div class="card">
-      <div class="search-box">
-        <input type="text" id="userIdInput" placeholder="選手ID または 氏名を入力">
-        <button onclick="loadData()">検索 / 読込</button>
+    <!-- ログイン画面 -->
+    <div id="login-view" class="card" style="max-width: 400px; margin: 40px auto;">
+      <h2 style="justify-content: center;">ATHLETE LOGIN</h2>
+      <div class="input-group">
+        <input type="text" id="userId" placeholder="ユーザーID (または選手名)">
       </div>
-      <div id="loading" class="loading">データ読み込み中...</div>
+      <div class="input-group">
+        <input type="password" id="password" placeholder="パスワード">
+      </div>
+      <button style="width:100%;" onclick="handleLogin()">ログイン</button>
     </div>
 
-    <div id="resultArea" style="display: none;">
+    <!-- ダッシュボード -->
+    <div id="dashboard" class="hidden">
+      
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h1 id="welcome-msg" style="font-size: 26px; color: #FFFFFF; margin: 0; font-weight: 900;"></h1>
+        <p style="color: var(--text-sub); font-size: 13px; margin-top: 4px;">フィジカル測定データ & パフォーマンス変遷</p>
+      </div>
 
       <!-- LATEST RECORD -->
       <div class="card">
-        <div class="section-title">
-          LATEST RECORD ( <span id="latestDate" style="color: var(--accent-gold);"></span> )
-        </div>
-        <div id="latestMetricsSummary" style="display: flex; flex-wrap: wrap; gap: 16px;">
-          <!-- 最新データサマリーがここに動的挿入されます -->
-        </div>
+        <h2>LATEST RECORD ( <span id="latest-date" style="color: var(--lucero-gold);">-</span> )</h2>
+        <div id="latest-metrics" class="metric-grid"></div>
       </div>
 
-      <!-- MEASUREMENT HISTORY -->
+      <!-- 全データ一覧 -->
       <div class="card">
-        <div class="section-title">MEASUREMENT HISTORY (全データ一覧)</div>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr id="tableHeader">
-                <th>回数</th>
-                <th>測定日</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-        </div>
+        <h2>MEASUREMENT HISTORY (全データ一覧)</h2>
+        <div id="history-table-box" class="data-table-container"></div>
       </div>
 
-      <!-- PERFORMANCE CHART -->
+      <!-- チャート -->
       <div class="card">
-        <div class="section-title">PERFORMANCE CHART (個人値 vs 中央値)</div>
-        <div class="select-box">
-          <label for="metricSelect" style="color: var(--text-sub); margin-right: 8px;">表示項目:</label>
+        <h2>PERFORMANCE CHART (個人値 vs 中央値)</h2>
+        <div class="input-group">
+          <label for="metricSelect" style="font-size: 12px; color: var(--text-sub); display: block; margin-bottom: 6px;">表示項目を選択</label>
           <select id="metricSelect" onchange="updateChart()"></select>
         </div>
-        <div class="chart-container">
-          <canvas id="analyticsChart"></canvas>
+        <div style="position: relative; height: 320px; margin-top: 15px;">
+          <canvas id="growthChart"></canvas>
         </div>
       </div>
 
@@ -224,205 +280,237 @@
 
   </div>
 
-  <script>
-    // ★ GASのWebアプリURL ★
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec";
+<script>
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec"; 
+  let playerData = null;
 
-    let currentPlayerData = null;
-    let myChart = null;
+  function showLoading() { document.getElementById('loading-overlay').classList.remove('hidden'); }
+  function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
 
-    async function loadData() {
-      const userId = document.getElementById("userIdInput").value.trim();
-      const loading = document.getElementById("loading");
-      const resultArea = document.getElementById("resultArea");
+  function getTimeFromDateStr(str) {
+    if (!str) return 0;
+    const clean = str.replace(/年|月/g, '/').replace(/日/g, '').replace(/\./g, '/').trim();
+    const t = new Date(clean).getTime();
+    return isNaN(t) ? 0 : t;
+  }
 
-      if (!userId) {
-        alert("選手IDまたは氏名を入力してください。");
+  async function handleLogin() {
+    const userId = document.getElementById('userId').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if(!userId) {
+      alert("IDを入力してください");
+      return;
+    }
+
+    showLoading();
+
+    try {
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'login', userId, password })
+      });
+      const result = await res.json();
+
+      if (result.success) {
+        await loadDashboardData(userId);
+        document.getElementById('login-view').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+      } else {
+        alert(result.message);
+      }
+    } catch(e) {
+      alert("通信エラーが発生しました");
+    } finally {
+      hideLoading();
+    }
+  }
+
+  async function loadDashboardData(userId) {
+    try {
+      const res = await fetch(`${GAS_URL}?action=getData&userId=${encodeURIComponent(userId)}`);
+      playerData = await res.json();
+
+      if (playerData.error) {
+        alert(playerData.error);
         return;
       }
 
-      loading.style.display = "block";
-      resultArea.style.display = "none";
+      document.getElementById('welcome-msg').innerText = `${playerData.name} 選手`;
 
-      try {
-        const response = await fetch(`${GAS_URL}?action=getData&userId=${encodeURIComponent(userId)}`);
-        
-        if (!response.ok) {
-          throw new Error(`通信エラー: ${response.status}`);
-        }
+      if (playerData.history && playerData.history.length > 0) {
+        playerData.history.sort((a, b) => getTimeFromDateStr(b.date) - getTimeFromDateStr(a.date));
 
-        const data = await response.json();
-        console.log("取得データ:", data);
-
-        if (data.error) {
-          alert("エラー: " + data.error);
-          return;
-        }
-
-        if (!data || !data.history || !Array.isArray(data.history) || data.history.length === 0) {
-          alert("該当するデータが見つかりませんでした。");
-          return;
-        }
-
-        currentPlayerData = data;
-        renderAll();
-
-      } catch (err) {
-        console.error(err);
-        alert("データの読み込みに失敗しました。\n詳細: " + err.message);
-      } finally {
-        loading.style.display = "none";
+        renderLatest(playerData.history[0]);
+        renderTable(playerData.history);
+        setupMetricSelect(playerData.history);
       }
+    } catch(e) {
+      console.error(e);
+      alert("データの読み込みに失敗しました");
     }
+  }
 
-    function renderAll() {
-      if (!currentPlayerData || !currentPlayerData.history) return;
+  function formatValue(val) {
+    if (!val || val === '-' || val.includes('#') || val.includes('ERR')) return '-';
+    if (val === '○' || val === '◯') return '<span class="badge-ok">CLEAR</span>';
+    if (val === '×') return '<span class="badge-ng">NO CLEAR</span>';
 
-      const history = currentPlayerData.history;
-      const resultArea = document.getElementById("resultArea");
-
-      // 1. 最新データの取得
-      const latestItem = history[history.length - 1];
-      document.getElementById("latestDate").textContent = latestItem.date || "-";
-
-      // 2. 利用可能な全測定項目（項目名）の抽出
-      const metricKeys = new Set();
-      history.forEach(item => {
-        if (item.metrics) {
-          Object.keys(item.metrics).forEach(k => metricKeys.add(k));
-        }
-      });
-      const metricsList = Array.from(metricKeys);
-
-      // 3. LATEST RECORD のカード描画
-      const summaryElem = document.getElementById("latestMetricsSummary");
-      summaryElem.innerHTML = "";
-      metricsList.forEach(m => {
-        const val = (latestItem.metrics && latestItem.metrics[m] !== undefined) ? latestItem.metrics[m] : "-";
-        summaryElem.innerHTML += `
-          <div style="background: #0d162d; border: 1px solid #2a3b63; padding: 12px; border-radius: 8px; flex: 1; min-width: 140px; text-align: center;">
-            <div style="font-size: 12px; color: var(--text-sub);">${m}</div>
-            <div style="font-size: 20px; font-weight: bold; color: var(--accent-gold); margin-top: 4px;">${val}</div>
-          </div>
-        `;
-      });
-
-      // 4. テーブル描画
-      renderTable(metricsList);
-
-      // 5. ドロップダウン＆グラフ描画
-      const selectElem = document.getElementById("metricSelect");
-      selectElem.innerHTML = "";
-      metricsList.forEach(m => {
-        const opt = document.createElement("option");
-        opt.value = m;
-        opt.textContent = m;
-        selectElem.appendChild(opt);
-      });
-
-      updateChart();
-
-      resultArea.style.display = "block";
+    const num = parseFloat(val);
+    if (!isNaN(num) && isFinite(val)) {
+      return (Math.round(num * 10) / 10).toString();
     }
+    return val;
+  }
 
-    function renderTable(metricsList) {
-      const headerRow = document.getElementById("tableHeader");
-      const tableBody = document.getElementById("tableBody");
-
-      // テーブルヘッダーの組み立て
-      headerRow.innerHTML = "<th>回数</th><th>測定日</th>";
-      metricsList.forEach(m => {
-        headerRow.innerHTML += `<th>${m}</th>`;
-      });
-
-      // テーブルボディの組み立て
-      tableBody.innerHTML = "";
-      currentPlayerData.history.forEach((item, index) => {
-        let tr = `<tr>
-          <td style="color: var(--accent-gold); font-weight: bold;">第 ${index + 1} 回</td>
-          <td>${item.date || '-'}</td>`;
-        
-        metricsList.forEach(m => {
-          const val = (item.metrics && item.metrics[m] !== undefined) ? item.metrics[m] : "-";
-          tr += `<td>${val}</td>`;
-        });
-
-        tr += "</tr>";
-        tableBody.innerHTML += tr;
-      });
+  function renderLatest(latest) {
+    document.getElementById('latest-date').innerText = latest.date;
+    let html = '';
+    for (let [key, val] of Object.entries(latest.metrics)) {
+      html += `
+        <div class="metric-item">
+          <span class="metric-label">${key}</span>
+          <span class="metric-value">${formatValue(val)}</span>
+        </div>`;
     }
+    document.getElementById('latest-metrics').innerHTML = html;
+  }
 
-    function updateChart() {
-      if (!currentPlayerData || !currentPlayerData.history) return;
+  function renderTable(history) {
+    if (!history || history.length === 0) return;
+    
+    const allKeysSet = new Set();
+    history.forEach(item => {
+      Object.keys(item.metrics).forEach(k => allKeysSet.add(k));
+    });
+    const keys = Array.from(allKeysSet);
 
-      const selectedMetric = document.getElementById("metricSelect").value;
-      const labels = [];
-      const playerValues = [];
-      const medianValues = [];
+    let html = `<table class="history-table"><thead><tr><th>回数</th><th>測定日</th>`;
+    keys.forEach(k => { html += `<th>${k}</th>`; });
+    html += `</tr></thead><tbody>`;
 
-      currentPlayerData.history.forEach((item, index) => {
-        labels.push(`第${index + 1}回 (${item.date})`);
-
-        const val = (item.metrics && item.metrics[selectedMetric] !== undefined) ? item.metrics[selectedMetric] : "-";
-        const medVal = (item.medians && item.medians[selectedMetric] !== undefined) ? item.medians[selectedMetric] : "-";
-
-        playerValues.push((val !== "-" && !isNaN(val)) ? parseFloat(val) : null);
-        medianValues.push((medVal !== "-" && !isNaN(medVal)) ? parseFloat(medVal) : null);
+    const ascHistory = history.slice().sort((a, b) => getTimeFromDateStr(a.date) - getTimeFromDateStr(b.date));
+    
+    ascHistory.forEach((item, index) => {
+      html += `<tr><td>第 ${index + 1} 回</td><td>${item.date}</td>`;
+      keys.forEach(k => {
+        const val = item.metrics[k];
+        html += `<td>${formatValue(val)}</td>`;
       });
+      html += `</tr>`;
+    });
 
-      if (myChart) {
-        myChart.destroy();
-      }
+    html += `</tbody></table>`;
+    document.getElementById('history-table-box').innerHTML = html;
+  }
 
-      const ctx = document.getElementById("analyticsChart").getContext("2d");
-      myChart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: "個人値",
-              data: playerValues,
-              borderColor: "#ffd700",
-              backgroundColor: "rgba(255, 215, 0, 0.1)",
-              borderWidth: 2,
-              pointRadius: 4,
-              tension: 0.2,
-              spanGaps: true
-            },
-            {
-              label: "チーム中央値",
-              data: medianValues,
-              borderColor: "#a0aec0",
-              borderDash: [4, 4],
-              borderWidth: 1.5,
-              pointRadius: 2,
-              tension: 0.2,
-              spanGaps: true
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              labels: { color: "#ffffff" }
-            }
-          },
-          scales: {
-            x: {
-              ticks: { color: "#a0aec0" },
-              grid: { color: "#1c2b4d" }
-            },
-            y: {
-              ticks: { color: "#a0aec0" },
-              grid: { color: "#1c2b4d" }
-            }
+  function setupMetricSelect(history) {
+    const select = document.getElementById('metricSelect');
+    select.innerHTML = '';
+
+    let numericKeys = new Set();
+    history.forEach(h => {
+      for (let [key, val] of Object.entries(h.metrics)) {
+        if (val && val !== '-' && !val.includes('#')) {
+          const num = parseFloat(val);
+          if (!isNaN(num) && isFinite(val)) {
+            numericKeys.add(key);
           }
         }
+      }
+    });
+
+    numericKeys.forEach(key => {
+      let opt = document.createElement('option');
+      opt.value = key;
+      opt.innerText = key;
+      select.appendChild(opt);
+    });
+
+    updateChart();
+  }
+
+  function updateChart() {
+    const selectedMetric = document.getElementById('metricSelect').value;
+    if (!selectedMetric || !playerData || !playerData.history) return;
+
+    const chronologicalHistory = playerData.history.slice().sort((a, b) => getTimeFromDateStr(a.date) - getTimeFromDateStr(b.date));
+
+    const labels = [];
+    const personalData = [];
+    const medianData = [];
+
+    chronologicalHistory.forEach(h => {
+      labels.push(h.date);
+      
+      const pRaw = h.metrics[selectedMetric];
+      const pVal = parseFloat(pRaw);
+      personalData.push((pRaw && pRaw !== '-' && !isNaN(pVal)) ? Math.round(pVal * 10) / 10 : null);
+
+      if (h.medians && h.medians[selectedMetric] !== undefined) {
+        const mRaw = h.medians[selectedMetric];
+        const mVal = parseFloat(mRaw);
+        medianData.push((mRaw && mRaw !== '-' && !isNaN(mVal)) ? Math.round(mVal * 10) / 10 : null);
+      } else {
+        medianData.push(null);
+      }
+    });
+
+    renderChart(selectedMetric, labels, personalData, medianData);
+  }
+
+  function renderChart(metricName, labels, personalData, medianData) {
+    const ctx = document.getElementById('growthChart').getContext('2d');
+    if (window.myChart) window.myChart.destroy();
+
+    const datasets = [
+      {
+        label: `${playerData.name} 選手 (記録)`,
+        data: personalData,
+        borderColor: '#FFD700',
+        backgroundColor: 'rgba(255, 215, 0, 0.15)',
+        pointBackgroundColor: '#FFD700',
+        pointBorderColor: '#070D18',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        fill: true,
+        tension: 0.3,
+        spanGaps: true
+      }
+    ];
+
+    if (medianData.some(v => v !== null)) {
+      datasets.push({
+        label: '期別 中央値',
+        data: medianData,
+        borderColor: '#94A3B8',
+        borderDash: [6, 6],
+        pointBackgroundColor: '#94A3B8',
+        pointRadius: 4,
+        fill: false,
+        tension: 0.3,
+        spanGaps: true
       });
     }
-  </script>
+
+    window.myChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels: labels, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: '#FFFFFF', font: { family: 'Noto Sans JP', weight: 'bold' } }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94A3B8' } },
+          y: { grid: { color: 'rgba(255, 255, 255, 0.08)' }, ticks: { color: '#94A3B8' }, beginAtZero: false }
+        }
+      }
+    });
+  }
+</script>
 </body>
 </html>
