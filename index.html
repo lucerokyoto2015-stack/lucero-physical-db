@@ -217,7 +217,7 @@
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    /* ① 一覧テーブル（文字サイズ・パディングを縮小） */
+    /* 一覧テーブル */
     .table-container {
       overflow-x: auto;
       border: 1px solid var(--border-item);
@@ -228,12 +228,12 @@
     .history-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 11px; /* 13px -> 11px に縮小 */
+      font-size: 11px;
       white-space: nowrap;
     }
 
     .history-table th, .history-table td {
-      padding: 6px 10px; /* 余白をコンパクト化 */
+      padding: 6px 10px;
       text-align: center;
       border-bottom: 1px solid var(--border-item);
     }
@@ -250,7 +250,7 @@
       background: rgba(255, 255, 255, 0.02);
     }
 
-    /* ② グラフ配置エリア（レスポンス対応） */
+    /* グラフ配置エリア */
     .charts-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -259,7 +259,7 @@
 
     @media (max-width: 768px) {
       .charts-grid {
-        grid-template-columns: 1fr; /* スマホでは1列化 */
+        grid-template-columns: 1fr;
       }
     }
 
@@ -278,7 +278,6 @@
       text-align: center;
     }
 
-    /* スマホでハミ出さないためのグラフ高さ固定コンテナ */
     .chart-wrapper {
       position: relative;
       width: 100%;
@@ -349,29 +348,62 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec";
 
-    // グラフ表示対象の項目定義（数値項目）
+    // グラフ表示対象の項目定義（全角数字・改行・「三段」「3段」「三段跳」などの揺れを全てカバー）
     const TARGET_GRAPH_METRICS = [
       { keyKeywords: ["身長"], title: "身長 (cm)" },
       { keyKeywords: ["体重"], title: "体重 (kg)" },
-      { keyKeywords: ["三段跳び", "三段跳"], title: "三段跳び (m)" },
+      { keyKeywords: ["立ち幅跳び", "立ち幅跳", "立ち幅"], title: "立ち幅跳び" },
+      { keyKeywords: ["三段跳び", "三段跳", "三段飛び", "3段跳び", "3段跳", "3段飛び", "３段跳び", "３段跳", "３段飛び", "三段", "3段", "３段"], title: "三段跳び" },
       { keyKeywords: ["400m", "400"], title: "20mシャトル 400m" },
       { keyKeywords: ["800m", "800"], title: "20mシャトル 800m" }
     ];
 
     let chartInstances = [];
 
+    // ヘッダー文字列の正規化処理（全角→半角、改行・スペース除去）
+    function normalizeHeader(str) {
+      if (!str) return '';
+      return str
+        .replace(/[\r\n]+/g, '')
+        .replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
+          return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+        })
+        .toLowerCase()
+        .trim();
+    }
+
+    // 数値文字列から単位などを取り除き、数値に変換する関数
+    function parseNumericValue(val) {
+      if (val === undefined || val === null || val === '') return null;
+      if (typeof val === 'number') return isNaN(val) ? null : val;
+      
+      // 全角数字を半角数字に変換
+      let cleanStr = String(val).replace(/[０-９]/g, function(s) {
+        return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+      });
+      // 数値と小数点以外を削除（例: "7.20m" -> "7.20"）
+      let match = cleanStr.match(/-?\d+(\.\d+)?/);
+      if (match) {
+        let num = parseFloat(match[0]);
+        return isNaN(num) ? null : num;
+      }
+      return null;
+    }
+
     function formatValueHtml(val) {
       if (val === undefined || val === null || val === '') return '-';
       
-      if (val === 'CLEAR') {
+      let strVal = String(val).trim();
+      if (strVal === 'CLEAR') {
         return '<span class="badge badge-clear">CLEAR</span>';
       }
-      if (val === 'NO CLEAR' || val === 'NOT CLEAR' || val === 'NOTCLEAR' || val === 'NOCLEAR') {
+      if (strVal === 'NO CLEAR' || strVal === 'NOT CLEAR' || strVal === 'NOTCLEAR' || strVal === 'NOCLEAR') {
         return '<span class="badge badge-noclear">NO CLEAR</span>';
       }
 
-      if (typeof val === 'number') {
-        return `<span class="metric-value-text">${Number.isInteger(val) ? val : val.toFixed(2)}</span>`;
+      let num = parseNumericValue(val);
+      if (num !== null) {
+        return `<span class="metric-value-text">${Number.isInteger(num) ? num : num.toFixed(2)}</span>`;
       }
 
       return `<span class="metric-value-text">${val}</span>`;
@@ -458,7 +490,7 @@
           const itemDiv = document.createElement('div');
           itemDiv.className = 'metric-item';
           itemDiv.innerHTML = `
-            <div class="metric-label">${header}</div>
+            <div class="metric-label">${header.replace(/[\r\n]+/g, ' ')}</div>
             <div class="metric-value-container">${formatValueHtml(val)}</div>
           `;
           latestGrid.appendChild(itemDiv);
@@ -487,12 +519,12 @@
 
       headerList.forEach(header => {
         let th = document.createElement('th');
-        th.textContent = header;
+        th.textContent = header.replace(/[\r\n]+/g, ' ');
         trHead.appendChild(th);
       });
       thead.appendChild(trHead);
 
-      // Body Rows (最新順に表示)
+      // Body Rows
       const reverseHistory = history.slice().reverse();
       reverseHistory.forEach(item => {
         let tr = document.createElement('tr');
@@ -518,34 +550,37 @@
       const container = document.getElementById('charts-container');
       container.innerHTML = '';
 
-      // 既存チャートインスタンスのクリア
+      // 既存チャートのクリア
       chartInstances.forEach(chart => chart.destroy());
       chartInstances = [];
 
       const dates = history.map(h => h.date);
 
       TARGET_GRAPH_METRICS.forEach(target => {
-        const matchedHeader = headerList.find(h => 
-          target.keyKeywords.some(kw => h.toLowerCase().includes(kw.toLowerCase()))
-        );
+        // キーワード照合（改行・全角半角を揃えて比較）
+        const matchedHeader = headerList.find(h => {
+          const normH = normalizeHeader(h);
+          return target.keyKeywords.some(kw => normH.includes(normalizeHeader(kw)));
+        });
 
         if (!matchedHeader) return;
 
-        // 本人データの抽出（数値化・未測定は null）
+        // 本人データの抽出（文字・単位を除去して数値化）
         const userValues = history.map(h => {
           const val = h.metrics[matchedHeader];
-          if (val === undefined || val === null || val === '' || isNaN(val)) return null;
-          return parseFloat(val);
+          return parseNumericValue(val);
         });
 
-        // 同期生中央値の抽出
+        // 期生中央値の抽出
         const medianValues = history.map(h => {
           if (mediansData && mediansData[h.date] && mediansData[h.date][matchedHeader] !== undefined) {
-            const mVal = mediansData[h.date][matchedHeader];
-            return (mVal !== null && !isNaN(mVal)) ? parseFloat(mVal) : null;
+            return parseNumericValue(mediansData[h.date][matchedHeader]);
           }
           return null;
         });
+
+        // 有効な数値データが全くない場合はグラフを表示しない
+        if (!userValues.some(v => v !== null)) return;
 
         // DOM構築
         const chartCard = document.createElement('div');
@@ -553,7 +588,7 @@
         
         const title = document.createElement('div');
         title.className = 'chart-title';
-        title.textContent = matchedHeader;
+        title.textContent = matchedHeader.replace(/[\r\n]+/g, ' ');
         
         const wrapper = document.createElement('div');
         wrapper.className = 'chart-wrapper';
@@ -575,11 +610,10 @@
             tension: 0.2,
             pointRadius: 4,
             pointBackgroundColor: '#FFD700',
-            spanGaps: true // 欠損値をスキップして線を繋ぐ
+            spanGaps: true
           }
         ];
 
-        // 中央値データが存在する場合のみ追加
         if (medianValues.some(v => v !== null)) {
           datasets.push({
             label: '期生中央値',
@@ -591,7 +625,7 @@
             tension: 0.2,
             pointRadius: 3,
             pointBackgroundColor: '#38BDF8',
-            spanGaps: true // 欠損値をスキップして線を繋ぐ
+            spanGaps: true
           });
         }
 
@@ -603,7 +637,7 @@
           },
           options: {
             responsive: true,
-            maintainAspectRatio: false, // コンテナサイズに合わせて自動調整
+            maintainAspectRatio: false,
             plugins: {
               legend: {
                 labels: { color: '#94A3B8', font: { family: 'Noto Sans JP', size: 10 } }
