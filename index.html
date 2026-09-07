@@ -38,17 +38,17 @@
     .container {
       max-width: 1000px;
       margin: 0 auto;
-      padding: 30px 16px;
+      padding: 20px 12px;
     }
 
     .site-header {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .site-title {
       font-family: 'Orbitron', sans-serif;
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 900;
       color: var(--lucero-gold);
       letter-spacing: 2px;
@@ -56,7 +56,7 @@
     }
 
     .site-subtitle {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-sub);
       letter-spacing: 1.5px;
       margin-top: 4px;
@@ -66,8 +66,8 @@
       background: var(--bg-card);
       border: 1px solid var(--border-card);
       border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 24px;
+      padding: 16px;
+      margin-bottom: 20px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       position: relative;
     }
@@ -120,13 +120,13 @@
 
     .section-title {
       font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 800;
       color: #FFFFFF;
-      margin: 0 0 20px 0;
+      margin: 0 0 16px 0;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       letter-spacing: 0.5px;
     }
 
@@ -134,7 +134,7 @@
       content: '';
       display: inline-block;
       width: 4px;
-      height: 20px;
+      height: 18px;
       background: var(--lucero-gold);
       border-radius: 2px;
       box-shadow: 0 0 8px var(--lucero-gold);
@@ -148,7 +148,7 @@
     .metric-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
+      gap: 10px;
     }
 
     @media (max-width: 768px) {
@@ -160,19 +160,19 @@
     .metric-item {
       background: var(--bg-item);
       border: 1px solid var(--border-item);
-      border-radius: 10px;
-      padding: 14px 16px;
+      border-radius: 8px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: 72px;
+      min-height: 64px;
     }
 
     .metric-label {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-sub);
       font-weight: 500;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -181,12 +181,12 @@
     .metric-value-container {
       display: flex;
       align-items: center;
-      min-height: 28px;
+      min-height: 24px;
     }
 
     .metric-value-text {
       font-family: 'Orbitron', sans-serif;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 800;
       color: #FFFFFF;
     }
@@ -195,20 +195,20 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 4px 12px;
-      border-radius: 6px;
+      padding: 2px 8px;
+      border-radius: 4px;
       font-family: 'Orbitron', sans-serif;
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 900;
       letter-spacing: 0.5px;
       text-align: center;
-      min-width: 85px;
+      min-width: 68px;
     }
 
     .badge-clear {
       background-color: #FFD700;
       color: #0F1726;
-      box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+      box-shadow: 0 0 6px rgba(255, 215, 0, 0.3);
     }
 
     .badge-noclear {
@@ -217,22 +217,23 @@
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    /* テーブルデザイン */
+    /* ① 一覧テーブル（文字サイズ・パディングを縮小） */
     .table-container {
       overflow-x: auto;
       border: 1px solid var(--border-item);
-      border-radius: 10px;
+      border-radius: 8px;
+      -webkit-overflow-scrolling: touch;
     }
 
     .history-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
+      font-size: 11px; /* 13px -> 11px に縮小 */
       white-space: nowrap;
     }
 
     .history-table th, .history-table td {
-      padding: 12px 16px;
+      padding: 6px 10px; /* 余白をコンパクト化 */
       text-align: center;
       border-bottom: 1px solid var(--border-item);
     }
@@ -242,38 +243,46 @@
       color: var(--lucero-gold);
       font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
       font-weight: 700;
+      font-size: 10px;
     }
 
     .history-table tr:hover {
       background: rgba(255, 255, 255, 0.02);
     }
 
-    /* グラフ配置エリア */
+    /* ② グラフ配置エリア（レスポンス対応） */
     .charts-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+      gap: 12px;
     }
 
     @media (max-width: 768px) {
       .charts-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* スマホでは1列化 */
       }
     }
 
     .chart-card {
       background: var(--bg-item);
       border: 1px solid var(--border-item);
-      border-radius: 10px;
-      padding: 16px;
+      border-radius: 8px;
+      padding: 12px;
     }
 
     .chart-title {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--lucero-gold);
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       text-align: center;
+    }
+
+    /* スマホでハミ出さないためのグラフ高さ固定コンテナ */
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      height: 220px;
     }
 
     #loading {
@@ -340,7 +349,7 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec";
 
-    // グラフ表示対象の項目定義（検索キーワードとタイトルのマッピング）
+    // グラフ表示対象の項目定義（数値項目）
     const TARGET_GRAPH_METRICS = [
       { keyKeywords: ["身長"], title: "身長 (cm)" },
       { keyKeywords: ["体重"], title: "体重 (kg)" },
@@ -509,35 +518,36 @@
       const container = document.getElementById('charts-container');
       container.innerHTML = '';
 
-      // 既存チャートの破棄
+      // 既存チャートインスタンスのクリア
       chartInstances.forEach(chart => chart.destroy());
       chartInstances = [];
 
       const dates = history.map(h => h.date);
 
       TARGET_GRAPH_METRICS.forEach(target => {
-        // ヘッダー名の一致確認
         const matchedHeader = headerList.find(h => 
           target.keyKeywords.some(kw => h.toLowerCase().includes(kw.toLowerCase()))
         );
 
         if (!matchedHeader) return;
 
-        // 個人データの抽出
+        // 本人データの抽出（数値化・未測定は null）
         const userValues = history.map(h => {
           const val = h.metrics[matchedHeader];
-          return typeof val === 'number' ? val : parseFloat(val) || null;
+          if (val === undefined || val === null || val === '' || isNaN(val)) return null;
+          return parseFloat(val);
         });
 
-        // 同期生中央値データの抽出 (GAS側から送られてくる場合の対応)
-        const medianValues = history.map((h, idx) => {
+        // 同期生中央値の抽出
+        const medianValues = history.map(h => {
           if (mediansData && mediansData[h.date] && mediansData[h.date][matchedHeader] !== undefined) {
-            return mediansData[h.date][matchedHeader];
+            const mVal = mediansData[h.date][matchedHeader];
+            return (mVal !== null && !isNaN(mVal)) ? parseFloat(mVal) : null;
           }
           return null;
         });
 
-        // チャート用DOMの作成
+        // DOM構築
         const chartCard = document.createElement('div');
         chartCard.className = 'chart-card';
         
@@ -545,12 +555,15 @@
         title.className = 'chart-title';
         title.textContent = matchedHeader;
         
+        const wrapper = document.createElement('div');
+        wrapper.className = 'chart-wrapper';
+        
         const canvas = document.createElement('canvas');
+        wrapper.appendChild(canvas);
         chartCard.appendChild(title);
-        chartCard.appendChild(canvas);
+        chartCard.appendChild(wrapper);
         container.appendChild(chartCard);
 
-        // Chart.js 描画
         const ctx = canvas.getContext('2d');
         const datasets = [
           {
@@ -561,22 +574,24 @@
             borderWidth: 2,
             tension: 0.2,
             pointRadius: 4,
-            pointBackgroundColor: '#FFD700'
+            pointBackgroundColor: '#FFD700',
+            spanGaps: true // 欠損値をスキップして線を繋ぐ
           }
         ];
 
-        // 中央値が存在する場合は線を追加
+        // 中央値データが存在する場合のみ追加
         if (medianValues.some(v => v !== null)) {
           datasets.push({
-            label: '同期生中央値',
+            label: '期生中央値',
             data: medianValues,
             borderColor: '#38BDF8',
-            borderDash: [5, 5],
+            borderDash: [4, 4],
             backgroundColor: 'transparent',
             borderWidth: 2,
             tension: 0.2,
             pointRadius: 3,
-            pointBackgroundColor: '#38BDF8'
+            pointBackgroundColor: '#38BDF8',
+            spanGaps: true // 欠損値をスキップして線を繋ぐ
           });
         }
 
@@ -588,18 +603,19 @@
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false, // コンテナサイズに合わせて自動調整
             plugins: {
               legend: {
-                labels: { color: '#94A3B8', font: { family: 'Noto Sans JP', size: 11 } }
+                labels: { color: '#94A3B8', font: { family: 'Noto Sans JP', size: 10 } }
               }
             },
             scales: {
               x: {
-                ticks: { color: '#94A3B8' },
+                ticks: { color: '#94A3B8', font: { size: 10 } },
                 grid: { color: 'rgba(255, 255, 255, 0.05)' }
               },
               y: {
-                ticks: { color: '#94A3B8' },
+                ticks: { color: '#94A3B8', font: { size: 10 } },
                 grid: { color: 'rgba(255, 255, 255, 0.05)' }
               }
             }
