@@ -13,7 +13,6 @@
       --bg-dark: #0B121E;
       --bg-card: rgba(15, 23, 38, 0.85);
       --lucero-gold: #FFD700;
-      --lucero-gold-glow: rgba(255, 215, 0, 0.35);
       --text-main: #FFFFFF;
       --text-sub: #94A3B8;
       --border-card: rgba(255, 215, 0, 0.2);
@@ -186,7 +185,7 @@
     }
 
     .accordion-item.active .accordion-icon {
-      transform: rotate(45deg); /* + が x に変わるアニメーション */
+      transform: rotate(45deg);
     }
 
     .accordion-body {
@@ -234,10 +233,9 @@
   </div>
 
   <script>
-    // ★ 自身のGASウェブアプリURLを設定してください
+    // ★ WebアプリのURLをこちらに書き換えてください
     const GAS_URL = "YOUR_GAS_DEPLOY_URL_HERE"; 
 
-    // CLEAR / NO CLEAR / 数値の表示整形関数
     function formatValueHtml(val) {
       if (val === undefined || val === null || val === '') return '-';
       
@@ -255,7 +253,6 @@
       return `<span class="metric-value-text">${val}</span>`;
     }
 
-    // 最新非空値の取得（カード表示用）
     function getLatestValue(history, metricKey) {
       for (let i = history.length - 1; i >= 0; i--) {
         const val = history[i].metrics[metricKey];
@@ -266,13 +263,11 @@
       return null;
     }
 
-    // アコーディオンのトグル制御
     function toggleAccordion(element) {
       const item = element.parentElement;
       item.classList.toggle('active');
     }
 
-    // 画面描画
     function renderApp(data) {
       document.getElementById('loading').style.display = 'none';
       document.getElementById('app-content').style.display = 'block';
@@ -287,17 +282,15 @@
       const history = data.history;
       const latestData = history[history.length - 1];
 
-      // 日付セット
       document.getElementById('latest-date').textContent = latestData.date;
 
-      // ヘッダー項目の一覧抽出
       const allHeaders = new Set();
       history.forEach(item => {
         Object.keys(item.metrics).forEach(key => allHeaders.add(key));
       });
       const headerList = Array.from(allHeaders);
 
-      // 1. LATEST RECORD グリッド生成
+      // 1. LATEST RECORD
       const latestGrid = document.getElementById('latest-grid');
       latestGrid.innerHTML = '';
 
@@ -312,7 +305,7 @@
         latestGrid.appendChild(itemDiv);
       });
 
-      // 2. MEASUREMENT HISTORY アコーディオン生成 (降順表示)
+      // 2. MEASUREMENT HISTORY
       const historyAccordion = document.getElementById('history-accordion');
       historyAccordion.innerHTML = '';
 
@@ -320,7 +313,7 @@
 
       reverseHistory.forEach((item, index) => {
         const accordionItem = document.createElement('div');
-        accordionItem.className = `accordion-item ${index === 0 ? '' : ''}`;
+        accordionItem.className = 'accordion-item';
 
         let gridHtml = '<div class="metric-grid">';
         headerList.forEach(header => {
@@ -348,7 +341,6 @@
       });
     }
 
-    // データ読み込み実行
     function init() {
       const urlParams = new URLSearchParams(window.location.search);
       const userId = urlParams.get('userId') || '1';
