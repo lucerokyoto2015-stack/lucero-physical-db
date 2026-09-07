@@ -306,6 +306,27 @@
   const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec"; 
   let playerData = null;
 
+  // 表示項目全17項目を固定リスト化（表記ゆれ防止用）
+  const TARGET_METRICS = [
+    "身長",
+    "体重",
+    "BMI",
+    "FFD",
+    "HBD(右)",
+    "HBD(左)",
+    "しゃがみ込み",
+    "万歳180°（右）",
+    "万歳180°（左）",
+    "開脚135°",
+    "壁倒立(1分）",
+    "ブリッジ（1分）",
+    "三点倒立（10秒）",
+    "３段跳び（m)",
+    "20mシャトル400m",
+    "20mシャトル800m",
+    "立ち幅跳び"
+  ];
+
   function showLoading() { document.getElementById('loading-overlay').style.display = 'flex'; }
   function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
 
@@ -316,8 +337,17 @@
     return isNaN(t) ? 0 : t;
   }
 
+  // 文字列の全角半角・記号・スペース差分を吸収するキー正規化関数
+  function normalizeKey(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+      .replace(/[\(\)（）\s\-_]/g, '')
+      .toLowerCase();
+  }
+
   // 再帰的に全てのキーと値を抽出する処理
-  function extractAllKeyValuePairs(obj, prefix = '') {
+  function extractAllKeyValuePairs(obj) {
     let result = {};
     if (!obj || typeof obj !== 'object') return result;
 
@@ -329,13 +359,23 @@
 
       let val = obj[key];
       if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
-        // ネストされたオブジェクトを展開
-        Object.assign(result, extractAllKeyValuePairs(val, key + '_'));
+        Object.assign(result, extractAllKeyValuePairs(val));
       } else {
         result[key] = val;
       }
     }
     return result;
+  }
+
+  // オブジェクトから特定項目（正規化一致）の値を取り出す
+  function getValueByNormalizedKey(obj, targetMetricName) {
+    const targetNorm = normalizeKey(targetMetricName);
+    for (let key in obj) {
+      if (normalizeKey(key) === targetNorm) {
+        return obj[key];
+      }
+    }
+    return undefined;
   }
 
   async function handleLogin() {
@@ -409,8 +449,8 @@
 
   function formatValue(val) {
     if (val === null || val === undefined || val === '' || val === '-' || String(val).includes('#') || String(val).includes('ERR')) return '-';
-    if (val === '○' || val === '◯') return '<span class="badge-ok">CLEAR</span>';
-    if (val === '×') return '<span class="badge-ng">NO CLEAR</span>';
+    if (val === '○' || val === '◯' || val === 1 || val === '1') return '<span class="badge-ok">CLEAR</span>';
+    if (val === '×' || val === 0 || val === '0') return '<span class="badge-ng">NO CLEAR</span>';
 
     const num = parseFloat(val);
     if (!isNaN(num) && isFinite(val)) {
@@ -424,28 +464,23 @@
     let html = '';
     const metrics = extractAllKeyValuePairs(latest);
 
-    for (let [key, val] of Object.entries(metrics)) {
+    TARGET_METRICS.forEach(metricName => {
+      const val = getValueByNormalizedKey(metrics, metricName);
       html += `
         <div class="metric-item">
-          <span class="metric-label">${key}</span>
+          <span class="metric-label">${metricName}</span>
           <span class="metric-value">${formatValue(val)}</span>
         </div>`;
-    }
+    });
+
     document.getElementById('latest-metrics').innerHTML = html;
   }
 
   function renderTable(history) {
     if (!history || history.length === 0) return;
-    
-    const allKeysSet = new Set();
-    history.forEach(item => {
-      const metrics = extractAllKeyValuePairs(item);
-      Object.keys(metrics).forEach(k => allKeysSet.add(k));
-    });
-    const keys = Array.from(allKeysSet);
 
     let html = `<table class="history-table"><thead><tr><th>回数</th><th>測定日</th>`;
-    keys.forEach(k => { html += `<th>${k}</th>`; });
+    TARGET_METRICS.forEach(k => { html += `<th>${k}</th>`; });
     html += `</tr></thead><tbody>`;
 
     const ascHistory = history.slice().sort((a, b) => getTimeFromDateStr(a.date) - getTimeFromDateStr(b.date));
@@ -453,8 +488,8 @@
     ascHistory.forEach((item, index) => {
       const metrics = extractAllKeyValuePairs(item);
       html += `<tr><td>第 ${index + 1} 回</td><td>${item.date || '-'}</td>`;
-      keys.forEach(k => {
-        const val = metrics[k];
+      TARGET_METRICS.forEach(k => {
+        const val = getValueByNormalizedKey(metrics, k);
         html += `<td>${formatValue(val)}</td>`;
       });
       html += `</tr>`;
@@ -468,20 +503,7 @@
     const select = document.getElementById('metricSelect');
     select.innerHTML = '';
 
-    let numericKeys = new Set();
-    history.forEach(h => {
-      const metrics = extractAllKeyValuePairs(h);
-      for (let [key, val] of Object.entries(metrics)) {
-        if (val !== null && val !== undefined && val !== '-' && !String(val).includes('#')) {
-          const num = parseFloat(val);
-          if (!isNaN(num) && isFinite(val)) {
-            numericKeys.add(key);
-          }
-        }
-      }
-    });
-
-    numericKeys.forEach(key => {
+    TARGET_METRICS.forEach(key => {
       let opt = document.createElement('option');
       opt.value = key;
       opt.innerText = key;
@@ -505,12 +527,12 @@
       labels.push(h.date || '-');
       
       const metrics = extractAllKeyValuePairs(h);
-      const pRaw = metrics[selectedMetric];
+      const pRaw = getValueByNormalizedKey(metrics, selectedMetric);
       const pVal = parseFloat(pRaw);
       personalData.push((pRaw !== null && pRaw !== undefined && pRaw !== '-' && !isNaN(pVal)) ? Math.round(pVal * 10) / 10 : null);
 
-      if (h.medians && h.medians[selectedMetric] !== undefined) {
-        const mRaw = h.medians[selectedMetric];
+      if (h.medians) {
+        const mRaw = getValueByNormalizedKey(h.medians, selectedMetric);
         const mVal = parseFloat(mRaw);
         medianData.push((mRaw !== null && mRaw !== undefined && mRaw !== '-' && !isNaN(mVal)) ? Math.round(mVal * 10) / 10 : null);
       } else {
