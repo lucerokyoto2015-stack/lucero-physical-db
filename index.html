@@ -67,7 +67,7 @@
       padding: 20px;
     }
 
-    /* 近未来感のあるカードデザイン (ガラスモフィズム) */
+    /* ガラスモフィズムカード */
     .card {
       background: var(--bg-card);
       backdrop-filter: blur(12px);
@@ -254,7 +254,7 @@
 <body>
 
   <header>
-    <div class="brand-title">LUCERO STARPASS</div>
+    <div class="brand-title">LUCERO KYOTO</div>
     <div class="brand-subtitle">Physical Data Analytics Portal</div>
   </header>
 
@@ -434,11 +434,12 @@
     const selectedMetric = document.getElementById('metricSelect').value;
     if (!selectedMetric || !playerData || !playerData.history) return;
 
-    const reversedHistory = [...playerData.history].reverse();
+    // 最新順から古い順（昇順）に変換して、左から右へ最新の日付になるように配置
+    const chronologicalHistory = [...playerData.history].reverse();
     const labels = [];
     const dataPoints = [];
 
-    reversedHistory.forEach(h => {
+    chronologicalHistory.forEach(h => {
       if (h.metrics[selectedMetric] !== undefined && !isNaN(parseFloat(h.metrics[selectedMetric]))) {
         labels.push(h.date);
         dataPoints.push(parseFloat(h.metrics[selectedMetric]));
