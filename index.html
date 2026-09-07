@@ -62,7 +62,6 @@
       margin-top: 4px;
     }
 
-    /* 選手名表示スタイルの追加 */
     .athlete-name-display {
       font-size: 18px;
       font-weight: 700;
@@ -130,6 +129,79 @@
       font-size: 13px;
       text-align: center;
       margin-top: 12px;
+    }
+
+    /* サッカーボールのアニメーション（確実動作版） */
+    #loading {
+      text-align: center;
+      padding: 40px 20px;
+      font-size: 16px;
+      color: var(--lucero-gold);
+      font-family: 'Orbitron', sans-serif;
+      display: none;
+    }
+
+    .ball-stage {
+      width: 140px;
+      height: 90px;
+      margin: 0 auto 10px auto;
+      position: relative;
+    }
+
+    .ball-mover {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 40px;
+      height: 70px;
+      animation: moveLeftRight 2s infinite ease-in-out alternate;
+    }
+
+    .soccer-ball {
+      width: 40px;
+      height: 40px;
+      font-size: 32px;
+      line-height: 40px;
+      text-align: center;
+      position: absolute;
+      bottom: 0;
+      animation: bounce 0.5s infinite alternate cubic-bezier(0.5, 0.05, 1, 0.5),
+                 roll 2s infinite linear;
+    }
+
+    .ball-shadow {
+      width: 32px;
+      height: 6px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      position: absolute;
+      bottom: -4px;
+      left: 4px;
+      animation: shadowPulse 0.5s infinite alternate cubic-bezier(0.5, 0.05, 1, 0.5);
+    }
+
+    /* 左右往復移動 */
+    @keyframes moveLeftRight {
+      0% { left: 0px; }
+      100% { left: 100px; }
+    }
+
+    /* 跳ねる動作 */
+    @keyframes bounce {
+      0% { bottom: 0px; }
+      100% { bottom: 45px; }
+    }
+
+    /* 回転する動作 */
+    @keyframes roll {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(720deg); }
+    }
+
+    /* 影の収縮 */
+    @keyframes shadowPulse {
+      0% { transform: scale(1); opacity: 0.6; }
+      100% { transform: scale(0.4); opacity: 0.2; }
     }
 
     .section-title {
@@ -231,7 +303,6 @@
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    /* 一覧テーブル */
     .table-container {
       overflow-x: auto;
       border: 1px solid var(--border-item);
@@ -264,7 +335,6 @@
       background: rgba(255, 255, 255, 0.02);
     }
 
-    /* グラフ配置エリア */
     .charts-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -297,15 +367,6 @@
       width: 100%;
       height: 220px;
     }
-
-    #loading {
-      text-align: center;
-      padding: 50px;
-      font-size: 16px;
-      color: var(--lucero-gold);
-      font-family: 'Orbitron', sans-serif;
-      display: none;
-    }
   </style>
 </head>
 <body>
@@ -314,7 +375,6 @@
     <div class="site-header">
       <h1 class="site-title">LUCERO KYOTO</h1>
       <div class="site-subtitle">PHYSICAL DATA ANALYTICS PORTAL</div>
-      <!-- 選手名表示領域（ログイン後に表示） -->
       <div id="athlete-name-container" class="athlete-name-display" style="display: none;">
         <span id="athlete-name">--</span>
       </div>
@@ -331,11 +391,13 @@
       <div id="login-error" class="error-msg"></div>
     </div>
 
-<!-- LOADING -->
+    <!-- LOADING -->
     <div id="loading">
-      <div class="ball-container">
-        <div class="ball-shadow"></div>
-        <div class="soccer-ball">⚽</div>
+      <div class="ball-stage">
+        <div class="ball-mover">
+          <div class="ball-shadow"></div>
+          <div class="soccer-ball">⚽</div>
+        </div>
       </div>
       <div>LOADING DATA...</div>
     </div>
@@ -372,7 +434,6 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec";
 
-    // グラフ表示対象の項目定義
     const TARGET_GRAPH_METRICS = [
       { keyKeywords: ["身長"], title: "身長 (cm)" },
       { keyKeywords: ["体重"], title: "体重 (kg)" },
@@ -492,7 +553,6 @@
       const appContent = document.getElementById('app-content');
       if (appContent) appContent.style.display = 'block';
 
-      // 氏名の表示設定（GAS側で userName, name, nameKanji 等の返却に対応、なければ入力されたID/名前を表示）
       const displayName = data.userName || data.name || data.nameKanji || data.userNameKanji || currentInputUserId;
       const nameContainer = document.getElementById('athlete-name-container');
       const nameEl = document.getElementById('athlete-name');
@@ -543,7 +603,6 @@
       thead.innerHTML = '';
       tbody.innerHTML = '';
 
-      // Header Row
       let trHead = document.createElement('tr');
       let thDate = document.createElement('th');
       thDate.textContent = '測定日';
@@ -556,7 +615,6 @@
       });
       thead.appendChild(trHead);
 
-      // Body Rows
       const reverseHistory = history.slice().reverse();
       reverseHistory.forEach(item => {
         let tr = document.createElement('tr');
@@ -582,7 +640,6 @@
       const container = document.getElementById('charts-container');
       container.innerHTML = '';
 
-      // 既存チャートのクリア
       chartInstances.forEach(chart => chart.destroy());
       chartInstances = [];
 
