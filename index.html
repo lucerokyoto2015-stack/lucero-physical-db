@@ -24,7 +24,7 @@
     }
 
     .container {
-      max-width: 800px;
+      max-width: 850px;
       margin: 0 auto;
     }
 
@@ -43,15 +43,16 @@
       margin-top: 0;
     }
 
-    input[type="text"], input[type="password"] {
+    input[type="text"], input[type="password"], select {
       width: 100%;
-      max-width: 300px;
+      max-width: 320px;
       padding: 10px 14px;
       margin-bottom: 12px;
       border: 1px solid #CBD5E1;
       border-radius: 6px;
       box-sizing: border-box;
       display: block;
+      font-size: 14px;
     }
 
     button {
@@ -84,15 +85,31 @@
       color: var(--lucero-navy);
     }
 
-    ul {
-      list-style: none;
-      padding-left: 0;
-      margin-top: 8px;
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
     }
 
-    li {
-      padding: 4px 0;
-      border-bottom: 1px dashed #E2E8F0;
+    .metric-item {
+      background: #ffffff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #E2E8F0;
+      font-size: 13px;
+    }
+
+    .metric-label {
+      font-weight: bold;
+      color: #64748B;
+      display: block;
+    }
+
+    .metric-value {
+      font-size: 16px;
+      color: var(--lucero-navy);
+      font-weight: bold;
     }
 
     .hidden { display: none; }
@@ -116,7 +133,7 @@
       <!-- 最新の記録 -->
       <div class="card">
         <h2>最新の記録 (<span id="latest-date">-</span>)</h2>
-        <div id="latest-metrics"></div>
+        <div id="latest-metrics" class="metric-grid"></div>
       </div>
 
       <!-- 過去の記録（アコーディオン） -->
@@ -128,6 +145,8 @@
       <!-- 成績の変遷（グラフ） -->
       <div class="card">
         <h2>成績の変遷（グラフ）</h2>
+        <label for="metricSelect" style="font-weight: bold; font-size: 14px;">表示種目を選択:</label>
+        <select id="metricSelect" onchange="updateChart()"></select>
         <canvas id="growthChart"></canvas>
       </div>
     </div>
@@ -135,7 +154,6 @@
   </div>
 
 <script>
-  // 設定されたGoogle Apps ScriptのWebアプリURL
   const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec"; 
   let playerData = null;
 
@@ -179,18 +197,13 @@
 
       document.getElementById('welcome-msg').innerText = `${playerData.name} 選手のフィジカルデータ`;
 
-      // 測定履歴が存在する場合のみ表示
       if (playerData.history && playerData.history.length > 0) {
         renderLatest(playerData.history[0]);
         renderAccordion(playerData.history);
-        renderChart(playerData.history);
+        setupMetricSelect(playerData.history);
       } else {
-        // 在籍前の過去データしかない場合や、データが無い場合の処理
         document.getElementById('latest-metrics').innerHTML = '<p style="color: #666;">測定データが登録されていません。</p>';
         document.getElementById('history-accordion').innerHTML = '<p style="color: #666;">表示できる過去のデータはありません。</p>';
-        
-        const ctx = document.getElementById('growthChart').getContext('2d');
-        if (window.myChart) window.myChart.destroy();
       }
     } catch(e) {
       console.error(e);
@@ -200,37 +213,83 @@
 
   function renderLatest(latest) {
     document.getElementById('latest-date').innerText = latest.date;
-    let html = '<ul>';
+    let html = '';
     for (let [key, val] of Object.entries(latest.metrics)) {
-      html += `<li><strong>${key}:</strong> ${val}</li>`;
+      html += `
+        <div class="metric-item">
+          <span class="metric-label">${key}</span>
+          <span class="metric-value">${val}</span>
+        </div>`;
     }
-    html += '</ul>';
     document.getElementById('latest-metrics').innerHTML = html;
   }
 
   function renderAccordion(history) {
     let html = '';
     history.forEach(item => {
-      html += `<details><summary>${item.date}</summary><ul>`;
+      html += `<details><summary>${item.date}</summary><div class="metric-grid">`;
       for (let [key, val] of Object.entries(item.metrics)) {
-        html += `<li>${key}: ${val}</li>`;
+        html += `
+          <div class="metric-item">
+            <span class="metric-label">${key}</span>
+            <span class="metric-value">${val}</span>
+          </div>`;
       }
-      html += '</ul></details>';
+      html += `</div></details>`;
     });
     document.getElementById('history-accordion').innerHTML = html;
   }
 
-  // Chart.jsによる折れ線グラフ描画（ルセーロカラー統一設定）
-  function renderChart(history) {
-    const reversedHistory = [...history].reverse(); // 時系列を古い順に並べ替え
-    const labels = reversedHistory.map(h => h.date);
-    
-    const firstMetric = Object.keys(reversedHistory[0].metrics)[0]; 
-    const dataPoints = reversedHistory.map(h => h.metrics[firstMetric]);
+  // 数値化可能な種目（グラフ表示用）を判別してセレクトボックスを作成
+  function setupMetricSelect(history) {
+    const select = document.getElementById('metricSelect');
+    select.innerHTML = '';
 
+    let numericKeys = new Set();
+    history.forEach(h => {
+      for (let [key, val] of Object.entries(h.metrics)) {
+        if (!isNaN(parseFloat(val)) && isFinite(val)) {
+          numericKeys.add(key);
+        }
+      }
+    });
+
+    if (numericKeys.size === 0) {
+      select.innerHTML = '<option>グラフ表示できる数値データがありません</option>';
+      return;
+    }
+
+    numericKeys.forEach(key => {
+      let opt = document.createElement('option');
+      opt.value = key;
+      opt.innerText = key;
+      select.appendChild(opt);
+    });
+
+    updateChart();
+  }
+
+  function updateChart() {
+    const selectedMetric = document.getElementById('metricSelect').value;
+    if (!selectedMetric || !playerData || !playerData.history) return;
+
+    const reversedHistory = [...playerData.history].reverse();
+    const labels = [];
+    const dataPoints = [];
+
+    reversedHistory.forEach(h => {
+      if (h.metrics[selectedMetric] !== undefined && !isNaN(parseFloat(h.metrics[selectedMetric]))) {
+        labels.push(h.date);
+        dataPoints.push(parseFloat(h.metrics[selectedMetric]));
+      }
+    });
+
+    renderChart(selectedMetric, labels, dataPoints);
+  }
+
+  function renderChart(metricName, labels, dataPoints) {
     const ctx = document.getElementById('growthChart').getContext('2d');
     
-    // 既存のグラフオブジェクトがあれば破棄して再描画
     if (window.myChart) {
       window.myChart.destroy();
     }
@@ -240,13 +299,13 @@
       data: {
         labels: labels,
         datasets: [{
-          label: firstMetric,
+          label: metricName,
           data: dataPoints,
-          borderColor: '#0B192C',         /* ネイビーのライン */
-          backgroundColor: 'rgba(255, 215, 0, 0.2)', /* ゴールドの透過背景 */
-          pointBackgroundColor: '#FFD700', /* ゴールドのデータ点 */
+          borderColor: '#0B192C',         /* ルセーロネイビー */
+          backgroundColor: 'rgba(255, 215, 0, 0.2)', /* ルセーロゴールド */
+          pointBackgroundColor: '#FFD700',
           pointBorderColor: '#0B192C',
-          pointRadius: 5,
+          pointRadius: 6,
           fill: true,
           tension: 0.2
         }]
@@ -259,6 +318,11 @@
               color: '#0B192C',
               font: { weight: 'bold' }
             }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: false
           }
         }
       }
