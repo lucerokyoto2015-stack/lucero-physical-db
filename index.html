@@ -340,7 +340,6 @@
       document.getElementById('welcome-msg').innerText = `${playerData.name} 選手`;
 
       if (playerData.history && playerData.history.length > 0) {
-        // 最新の日付順（降順）にソート
         playerData.history.sort((a, b) => getTimeFromDateStr(b.date) - getTimeFromDateStr(a.date));
 
         renderLatest(playerData.history[0]);
@@ -353,10 +352,17 @@
     }
   }
 
+  // 表示フォーマット関数（エラー文字・四捨五入・バッジ化）
   function formatValue(val) {
+    if (!val || val === '-' || val.includes('#') || val.includes('ERR')) return '-';
     if (val === '○' || val === '◯') return '<span class="badge-ok">CLEAR</span>';
     if (val === '×') return '<span class="badge-ng">NO CLEAR</span>';
-    return (val !== undefined && val !== null && val !== '') ? val : '-';
+
+    const num = parseFloat(val);
+    if (!isNaN(num) && isFinite(val)) {
+      return (Math.round(num * 10) / 10).toString();
+    }
+    return val;
   }
 
   function renderLatest(latest) {
@@ -372,11 +378,9 @@
     document.getElementById('latest-metrics').innerHTML = html;
   }
 
-  // ★全データ一覧テーブルのレンダリング関数
   function renderTable(history) {
     if (!history || history.length === 0) return;
     
-    // 全データから測定項目（列ヘッダー）のリストを収集
     const allKeysSet = new Set();
     history.forEach(item => {
       Object.keys(item.metrics).forEach(k => allKeysSet.add(k));
@@ -387,7 +391,6 @@
     keys.forEach(k => { html += `<th>${k}</th>`; });
     html += `</tr></thead><tbody>`;
 
-    // 測定の過去（第1回〜）から順に並べて表示
     const ascHistory = history.slice().sort((a, b) => getTimeFromDateStr(a.date) - getTimeFromDateStr(b.date));
     
     ascHistory.forEach((item, index) => {
@@ -410,8 +413,11 @@
     let numericKeys = new Set();
     history.forEach(h => {
       for (let [key, val] of Object.entries(h.metrics)) {
-        if (!isNaN(parseFloat(val)) && isFinite(val)) {
-          numericKeys.add(key);
+        if (val && val !== '-' && !val.includes('#')) {
+          const num = parseFloat(val);
+          if (!isNaN(num) && isFinite(val)) {
+            numericKeys.add(key);
+          }
         }
       }
     });
@@ -430,7 +436,6 @@
     const selectedMetric = document.getElementById('metricSelect').value;
     if (!selectedMetric || !playerData || !playerData.history) return;
 
-    // 時系列（古い日付 → 新しい日付）でソート
     const chronologicalHistory = playerData.history.slice().sort((a, b) => getTimeFromDateStr(a.date) - getTimeFromDateStr(b.date));
 
     const labels = [];
@@ -440,12 +445,14 @@
     chronologicalHistory.forEach(h => {
       labels.push(h.date);
       
-      const pVal = parseFloat(h.metrics[selectedMetric]);
-      personalData.push(!isNaN(pVal) ? pVal : null);
+      const pRaw = h.metrics[selectedMetric];
+      const pVal = parseFloat(pRaw);
+      personalData.push((pRaw && pRaw !== '-' && !isNaN(pVal)) ? Math.round(pVal * 10) / 10 : null);
 
       if (h.medians && h.medians[selectedMetric] !== undefined) {
-        const mVal = parseFloat(h.medians[selectedMetric]);
-        medianData.push(!isNaN(mVal) ? mVal : null);
+        const mRaw = h.medians[selectedMetric];
+        const mVal = parseFloat(mRaw);
+        medianData.push((mRaw && mRaw !== '-' && !isNaN(mVal)) ? Math.round(mVal * 10) / 10 : null);
       } else {
         medianData.push(null);
       }
@@ -469,7 +476,8 @@
         pointBorderWidth: 2,
         pointRadius: 5,
         fill: true,
-        tension: 0.3
+        tension: 0.3,
+        spanGaps: true // データがない部分はスキップして線を接続
       }
     ];
 
@@ -482,7 +490,8 @@
         pointBackgroundColor: '#94A3B8',
         pointRadius: 4,
         fill: false,
-        tension: 0.3
+        tension: 0.3,
+        spanGaps: true // データがない部分はスキップして線を接続
       });
     }
 
