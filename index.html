@@ -60,7 +60,7 @@
     }
 
     .container {
-      max-width: 900px;
+      max-width: 950px;
       margin: 0 auto;
       padding: 20px;
     }
@@ -224,7 +224,7 @@
 </head>
 <body>
 
-  <!-- ローディング表示（初期状態は非表示） -->
+  <!-- ローディング overlay -->
   <div id="loading-overlay" style="display: none;">
     <div class="ball-spinner">⚽</div>
     <div class="loading-text">NOW LOADING...</div>
@@ -237,7 +237,7 @@
 
   <div class="container">
     
-    <!-- ★ ログイン画面 (初期表示) ★ -->
+    <!-- ログイン画面 -->
     <div id="login-view" class="card" style="max-width: 400px; margin: 40px auto; display: block;">
       <h2 style="justify-content: center;">ATHLETE LOGIN</h2>
       <div class="input-group">
@@ -249,12 +249,12 @@
       <button style="width:100%;" onclick="handleLogin()">ログイン</button>
     </div>
 
-    <!-- ★ ダッシュボード (ログイン前は非表示) ★ -->
+    <!-- ダッシュボード -->
     <div id="dashboard" style="display: none;">
       
       <div style="text-align: center; margin-bottom: 24px; position: relative;">
         <h1 id="welcome-msg" style="font-size: 26px; color: #FFFFFF; margin: 0; font-weight: 900;"></h1>
-        <p style="color: var(--text-sub); font-size: 13px; margin-top: 4px;">フィジカル測定データ & パフォーマンス変遷</p>
+        <p style="color: var(--text-sub); font-size: 13px; margin-top: 4px;">フィジカル測定データ & パフォーマンス変変</p>
         <button onclick="logout()" style="position: absolute; right: 0; top: 0; padding: 6px 12px; font-size: 12px;">ログアウト</button>
       </div>
 
@@ -295,9 +295,25 @@
 
   function getTimeFromDateStr(str) {
     if (!str) return 0;
-    const clean = str.replace(/年|月/g, '/').replace(/日/g, '').replace(/\./g, '/').trim();
+    const clean = str.toString().replace(/年|月/g, '/').replace(/日/g, '').replace(/\./g, '/').trim();
     const t = new Date(clean).getTime();
     return isNaN(t) ? 0 : t;
+  }
+
+  // データオブジェクトから「測定項目のキーと値のペア」を安全に取り出すヘルパー関数
+  function extractMetricsObj(item) {
+    if (item.metrics && typeof item.metrics === 'object') {
+      return item.metrics;
+    }
+    // metricsプロパティがない場合、dateやmedians等の基本キー以外のものを測定項目とみなす
+    const res = {};
+    const excludeKeys = ['date', 'medians', '回数', '測定日', 'name', 'userId', 'id'];
+    Object.keys(item).forEach(k => {
+      if (!excludeKeys.includes(k)) {
+        res[k] = item[k];
+      }
+    });
+    return res;
   }
 
   async function handleLogin() {
@@ -345,12 +361,14 @@
       const res = await fetch(`${GAS_URL}?action=getData&userId=${encodeURIComponent(userId)}`);
       playerData = await res.json();
 
+      console.log("【デバッグ】GAS取得データ:", playerData);
+
       if (playerData.error) {
         alert(playerData.error);
         return;
       }
 
-      document.getElementById('welcome-msg').innerText = `${playerData.name} 選手`;
+      document.getElementById('welcome-msg').innerText = `${playerData.name || userId} 選手`;
 
       if (playerData.history && playerData.history.length > 0) {
         playerData.history.sort((a, b) => getTimeFromDateStr(b.date) - getTimeFromDateStr(a.date));
@@ -366,7 +384,7 @@
   }
 
   function formatValue(val) {
-    if (!val || val === '-' || val.includes('#') || val.includes('ERR')) return '-';
+    if (val === null || val === undefined || val === '' || val === '-' || String(val).includes('#') || String(val).includes('ERR')) return '-';
     if (val === '○' || val === '◯') return '<span class="badge-ok">CLEAR</span>';
     if (val === '×') return '<span class="badge-ng">NO CLEAR</span>';
 
@@ -374,13 +392,15 @@
     if (!isNaN(num) && isFinite(val)) {
       return (Math.round(num * 10) / 10).toString();
     }
-    return val;
+    return String(val);
   }
 
   function renderLatest(latest) {
-    document.getElementById('latest-date').innerText = latest.date;
+    document.getElementById('latest-date').innerText = latest.date || '-';
     let html = '';
-    for (let [key, val] of Object.entries(latest.metrics)) {
+    const metrics = extractMetricsObj(latest);
+
+    for (let [key, val] of Object.entries(metrics)) {
       html += `
         <div class="metric-item">
           <span class="metric-label">${key}</span>
@@ -393,9 +413,11 @@
   function renderTable(history) {
     if (!history || history.length === 0) return;
     
+    // 全履歴から存在する全ての測定項目のキー（名前）を収集
     const allKeysSet = new Set();
     history.forEach(item => {
-      Object.keys(item.metrics).forEach(k => allKeysSet.add(k));
+      const metrics = extractMetricsObj(item);
+      Object.keys(metrics).forEach(k => allKeysSet.add(k));
     });
     const keys = Array.from(allKeysSet);
 
@@ -406,9 +428,10 @@
     const ascHistory = history.slice().sort((a, b) => getTimeFromDateStr(a.date) - getTimeFromDateStr(b.date));
     
     ascHistory.forEach((item, index) => {
-      html += `<tr><td>第 ${index + 1} 回</td><td>${item.date}</td>`;
+      const metrics = extractMetricsObj(item);
+      html += `<tr><td>第 ${index + 1} 回</td><td>${item.date || '-'}</td>`;
       keys.forEach(k => {
-        const val = item.metrics[k];
+        const val = metrics[k];
         html += `<td>${formatValue(val)}</td>`;
       });
       html += `</tr>`;
@@ -424,8 +447,9 @@
 
     let numericKeys = new Set();
     history.forEach(h => {
-      for (let [key, val] of Object.entries(h.metrics)) {
-        if (val && val !== '-' && !val.includes('#')) {
+      const metrics = extractMetricsObj(h);
+      for (let [key, val] of Object.entries(metrics)) {
+        if (val !== null && val !== undefined && val !== '-' && !String(val).includes('#')) {
           const num = parseFloat(val);
           if (!isNaN(num) && isFinite(val)) {
             numericKeys.add(key);
@@ -455,16 +479,17 @@
     const medianData = [];
 
     chronologicalHistory.forEach(h => {
-      labels.push(h.date);
+      labels.push(h.date || '-');
       
-      const pRaw = h.metrics[selectedMetric];
+      const metrics = extractMetricsObj(h);
+      const pRaw = metrics[selectedMetric];
       const pVal = parseFloat(pRaw);
-      personalData.push((pRaw && pRaw !== '-' && !isNaN(pVal)) ? Math.round(pVal * 10) / 10 : null);
+      personalData.push((pRaw !== null && pRaw !== undefined && pRaw !== '-' && !isNaN(pVal)) ? Math.round(pVal * 10) / 10 : null);
 
       if (h.medians && h.medians[selectedMetric] !== undefined) {
         const mRaw = h.medians[selectedMetric];
         const mVal = parseFloat(mRaw);
-        medianData.push((mRaw && mRaw !== '-' && !isNaN(mVal)) ? Math.round(mVal * 10) / 10 : null);
+        medianData.push((mRaw !== null && mRaw !== undefined && mRaw !== '-' && !isNaN(mVal)) ? Math.round(mVal * 10) / 10 : null);
       } else {
         medianData.push(null);
       }
@@ -479,7 +504,7 @@
 
     const datasets = [
       {
-        label: `${playerData.name} 選手 (記録)`,
+        label: `${playerData.name || ''} 選手 (記録)`,
         data: personalData,
         borderColor: '#FFD700',
         backgroundColor: 'rgba(255, 215, 0, 0.15)',
