@@ -3,297 +3,507 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LUCERO KYOTO Physical Portal</title>
+  <title>LUCERO KYOTO | Physical Analytics</title>
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Noto+Sans+JP:wght@400;600;700;900&display=swap" rel="stylesheet">
+  
   <style>
     :root {
-      --bg-color: #0b1325;
-      --card-bg: #131e3a;
-      --card-border: rgba(255, 215, 0, 0.25);
-      --accent-gold: #ffd700;
-      --text-main: #ffffff;
-      --text-sub: #94a3b8;
-      --accent-blue: #38bdf8;
+      --bg-dark: #070D18;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --lucero-navy: #0B192C;
+      --lucero-gold: #FFD700;
+      --lucero-gold-glow: rgba(255, 215, 0, 0.35);
+      --lucero-gold-dark: #CFA600;
+      --text-main: #F8FAFC;
+      --text-sub: #94A3B8;
+      --border-glow: rgba(255, 215, 0, 0.25);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); padding: 20px 10px; min-height: 100vh; }
-    .container { max-width: 900px; margin: 0 auto; }
-    .hidden { display: none !important; }
+    * { box-sizing: border-box; }
 
-    /* ログイン画面 */
-    .login-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 30px;
-      max-width: 400px;
-      margin: 80px auto;
+    body {
+      font-family: 'Noto Sans JP', 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top center, #11223A 0%, var(--bg-dark) 70%);
+      min-height: 100vh;
+      color: var(--text-main);
+      line-height: 1.6;
+    }
+
+    header {
       text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      padding: 30px 20px 10px;
     }
-    .login-card h2 { color: var(--accent-gold); margin-bottom: 20px; font-size: 1.5rem; }
-    .input-group { margin-bottom: 15px; text-align: left; }
-    .input-group label { display: block; font-size: 0.85rem; color: var(--text-sub); margin-bottom: 5px; }
-    .input-group input {
-      width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #2a3b63;
-      background: #0b1325; color: #fff; font-size: 1rem;
-    }
-    .btn-submit {
-      width: 100%; padding: 12px; border: none; border-radius: 6px;
-      background: var(--accent-gold); color: #000; font-weight: bold; font-size: 1rem;
-      cursor: pointer; margin-top: 10px; transition: opacity 0.2s;
-    }
-    .btn-submit:hover { opacity: 0.9; }
 
-    /* ダッシュボード */
-    header { text-align: center; margin-bottom: 30px; }
-    header h1 { color: #fff; font-size: 1.8rem; margin-bottom: 5px; }
-    header p { color: var(--text-sub); font-size: 0.9rem; }
+    .brand-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: var(--lucero-gold);
+      text-transform: uppercase;
+      text-shadow: 0 0 15px var(--lucero-gold-glow);
+      margin: 0;
+    }
 
-    .section-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
+    .brand-subtitle {
+      font-size: 12px;
+      color: var(--text-sub);
+      letter-spacing: 2px;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
       padding: 20px;
-      margin-bottom: 25px;
-    }
-    .section-title {
-      color: var(--accent-gold);
-      font-size: 1.1rem;
-      font-weight: bold;
-      margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .section-title::before {
-      content: ''; display: inline-block; width: 4px; height: 16px; background: var(--accent-gold); border-radius: 2px;
     }
 
-    /* 指標グリッド */
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 12px;
-      margin-bottom: 15px;
-    }
-    .metric-box {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 8px;
-      padding: 12px;
-      text-align: center;
-    }
-    .metric-label { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .metric-value { font-size: 1.3rem; font-weight: bold; color: var(--accent-gold); }
-    .metric-median { font-size: 0.7rem; color: var(--accent-blue); margin-top: 2px; }
-
-    /* アコーディオン */
-    .history-item {
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
-      margin-bottom: 10px;
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-glow);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+      position: relative;
       overflow: hidden;
     }
-    .history-header {
-      padding: 15px 20px;
-      background: rgba(255,255,255,0.02);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      font-weight: bold;
-      color: var(--accent-gold);
-    }
-    .history-header:hover { background: rgba(255,255,255,0.05); }
-    .history-body { padding: 15px; display: none; border-top: 1px solid rgba(255,255,255,0.05); }
-    .history-item.open .history-body { display: block; }
 
-    /* ローダー */
-    .loader {
-      display: inline-block; width: 24px; height: 24px;
-      border: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
-      border-top-color: var(--accent-gold); animation: spin 1s ease-in-out infinite;
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--lucero-gold), transparent);
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-top: 0;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 18px;
+      background: var(--lucero-gold);
+      border-radius: 2px;
+      box-shadow: 0 0 10px var(--lucero-gold);
+    }
+
+    .input-group { margin-bottom: 16px; }
+
+    input[type="text"], input[type="password"], select {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(7, 13, 24, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #FFFFFF;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    button {
+      padding: 12px 20px;
+      background: linear-gradient(135deg, var(--lucero-gold) 0%, var(--lucero-gold-dark) 100%);
+      color: #070D18;
+      font-size: 15px;
+      font-weight: 800;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px var(--lucero-gold-glow);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .metric-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .metric-label { font-size: 11px; color: var(--text-sub); display: block; }
+    .metric-value { font-size: 16px; font-weight: 700; color: #FFFFFF; }
+
+    .badge-ok {
+      color: #070D18; background: var(--lucero-gold);
+      padding: 2px 8px; border-radius: 4px; font-weight: 900;
+    }
+
+    .badge-ng {
+      color: #94A3B8; background: rgba(255, 255, 255, 0.1);
+      padding: 2px 8px; border-radius: 4px; font-weight: 700;
+    }
+
+    /* データテーブルスタイル */
+    .data-table-container {
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      color: #FFFFFF;
+      text-align: center;
+    }
+
+    .history-table th, .history-table td {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 8px 6px;
+      white-space: nowrap;
+    }
+
+    .history-table th {
+      background: rgba(255, 215, 0, 0.15);
+      color: var(--lucero-gold);
+      font-weight: 700;
+    }
+
+    #loading-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(7, 13, 24, 0.9); backdrop-filter: blur(10px);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      z-index: 9999;
+    }
+
+    .ball-spinner { font-size: 56px; animation: spinBall 1.2s linear infinite; }
+    .loading-text { font-family: 'Orbitron', sans-serif; font-size: 18px; color: var(--lucero-gold); }
+
+    @keyframes spinBall { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <!-- ログインビュー -->
-    <div id="login-view" class="login-card">
-      <h2>LUCERO KYOTO</h2>
-      <p style="color:var(--text-sub); font-size:0.85rem; margin-bottom:20px;">フィジカルポータル ログイン</p>
-      <div class="input-group">
-        <label>ユーザーID または 選手名</label>
-        <input type="text" id="userId" placeholder="例: KIPPEI または 辰己桔平">
-      </div>
-      <div class="input-group">
-        <label>パスワード</label>
-        <input type="password" id="password" placeholder="パスワードを入力">
-      </div>
-      <button class="btn-submit" onclick="handleLogin()">ログイン</button>
-      <div id="login-msg" style="color:#ef4444; font-size:0.85rem; margin-top:10px;"></div>
-    </div>
-
-    <!-- ダッシュボードビュー -->
-    <div id="dashboard" class="hidden">
-      <header>
-        <h1 id="player-name-display">--- 選手</h1>
-        <p>フィジカル測定データ & パフォーマンス変遷</p>
-      </header>
-
-      <!-- 最新の記録 -->
-      <div class="section-card">
-        <div class="section-title">LATEST RECORD ( <span id="latest-date">---</span> )</div>
-        <div class="metrics-grid" id="latest-metrics">
-          <!-- JSで動的挿入 -->
-        </div>
-      </div>
-
-      <!-- 履歴一覧 -->
-      <div class="section-card">
-        <div class="section-title">MEASUREMENT HISTORY</div>
-        <div id="history-container">
-          <!-- JSで動的挿入 -->
-        </div>
-      </div>
-    </div>
+  <div id="loading-overlay" class="hidden">
+    <div class="ball-spinner">⚽</div>
+    <div class="loading-text">NOW LOADING...</div>
   </div>
 
-  <script>
-    // ★ご自身のGASデプロイURLに差し替えてください★
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwc8G9J4d6dC2q82oE3r9GzF39aH_PqE9b1G8c7d_example/exec";
+  <header>
+    <div class="brand-title">LUCERO KYOTO</div>
+    <div class="brand-subtitle">Physical Data Analytics Portal</div>
+  </header>
 
-    async function handleLogin() {
-      const userId = document.getElementById('userId').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const msg = document.getElementById('login-msg');
+  <div class="container">
+    
+    <!-- ログイン画面 -->
+    <div id="login-view" class="card" style="max-width: 400px; margin: 40px auto;">
+      <h2 style="justify-content: center;">ATHLETE LOGIN</h2>
+      <div class="input-group">
+        <input type="text" id="userId" placeholder="ユーザーID (選手ID)">
+      </div>
+      <div class="input-group">
+        <input type="password" id="password" placeholder="パスワード">
+      </div>
+      <button style="width:100%;" id="loginBtn" onclick="handleLogin()">ログイン</button>
+    </div>
 
-      if (!userId) {
-        msg.textContent = "ユーザーIDまたは選手名を入力してください";
+    <!-- ダッシュボード本体 -->
+    <div id="dashboard" class="hidden">
+      
+      <div style="margin-bottom: 20px;">
+        <h1 id="welcome-msg" style="font-size: 24px; color: #FFFFFF; margin: 0; font-weight: 900;"></h1>
+        <p style="color: var(--text-sub); font-size: 13px; margin: 2px 0 0 0;">フィジカル測定データ & パフォーマンス変遷</p>
+      </div>
+
+      <div id="display-container">
+        
+        <!-- 最新記録 -->
+        <div class="card">
+          <h2>LATEST RECORD (<span id="latest-date" style="color: var(--lucero-gold);">-</span>)</h2>
+          <div id="latest-metrics" class="metric-grid"></div>
+        </div>
+
+        <!-- 測定履歴一覧テーブル -->
+        <div class="card">
+          <h2>MEASUREMENT HISTORY (全データ一覧)</h2>
+          <div id="history-table-box" class="data-table-container"></div>
+        </div>
+
+        <!-- パフォーマンスチャート -->
+        <div class="card">
+          <h2>PERFORMANCE CHART (個人値 vs 中央値)</h2>
+          <div class="input-group">
+            <label for="metricSelect" style="font-size: 12px; color: var(--text-sub); display: block; margin-bottom: 6px;">表示項目を選択</label>
+            <select id="metricSelect" onchange="updateChart()"></select>
+          </div>
+          <div style="position: relative; height: 320px; margin-top: 15px;">
+            <canvas id="growthChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+<script>
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec"; 
+  let playerData = null;
+
+  function showLoading() { document.getElementById('loading-overlay').classList.remove('hidden'); }
+  function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
+
+  function getTimeFromDateStr(str) {
+    if (!str) return 0;
+    const clean = str.replace(/年|月/g, '/').replace(/日/g, '').replace(/\./g, '/').trim();
+    const t = new Date(clean).getTime();
+    return isNaN(t) ? 0 : t;
+  }
+
+  async function handleLogin() {
+    const userId = document.getElementById('userId').value;
+    const password = document.getElementById('password').value;
+
+    if(!userId || !password) {
+      alert("IDとパスワードを入力してください");
+      return;
+    }
+
+    showLoading();
+
+    try {
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'login', userId, password })
+      });
+      const result = await res.json();
+
+      if (result.success) {
+        await loadDashboardData(userId);
+        document.getElementById('login-view').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+      } else {
+        alert(result.message);
+      }
+    } catch(e) {
+      alert("通信エラーが発生しました");
+    } finally {
+      hideLoading();
+    }
+  }
+
+  async function loadDashboardData(userId) {
+    try {
+      const res = await fetch(`${GAS_URL}?action=getData&userId=${userId}`);
+      playerData = await res.json();
+
+      if (playerData.error) {
+        alert(playerData.error);
         return;
       }
 
-      msg.textContent = "認証中...";
+      document.getElementById('welcome-msg').innerText = `${playerData.name} 選手`;
 
-      try {
-        // POST認証
-        const res = await fetch(GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'login', userId: userId, password: password })
-        });
-        const result = await res.json();
-
-        if (result.success) {
-          msg.textContent = "";
-          await loadData(userId);
-          document.getElementById('login-view').classList.add('hidden');
-          document.getElementById('dashboard').classList.remove('hidden');
-        } else {
-          msg.textContent = result.message || "ログインに失敗しました";
-        }
-      } catch (err) {
-        console.error(err);
-        // 通信失敗時でも直接データ取得を試行
-        await loadData(userId);
-        document.getElementById('login-view').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
-      }
-    }
-
-    async function loadData(userId) {
-      try {
-        const res = await fetch(`${GAS_URL}?action=getData&userId=${encodeURIComponent(userId)}`);
-        const data = await res.json();
-
-        if (!data || !data.history || data.history.length === 0) {
-          alert("該当する測定データが見つかりませんでした。");
-          return;
-        }
-
-        // 選手名表示
-        document.getElementById('player-name-display').textContent = `${data.name} 選手`;
-
-        // 1. 最新データの表示
-        const latest = data.history[0]; // 最初の要素を最新とする
-        document.getElementById('latest-date').textContent = latest.date;
-        renderMetrics('latest-metrics', latest.metrics, latest.medians, latest.medianLabel);
-
-        // 2. 過去履歴の表示
-        const historyContainer = document.getElementById('history-container');
-        historyContainer.innerHTML = '';
-
-        data.history.forEach((item, index) => {
-          const itemEl = document.createElement('div');
-          itemEl.className = `history-item ${index === 0 ? 'open' : ''}`;
-          
-          itemEl.innerHTML = `
-            <div class="history-header" onclick="toggleAccordion(this)">
-              <span>${item.date}</span>
-              <span class="icon">${index === 0 ? '−' : '＋'}</span>
-            </div>
-            <div class="history-body">
-              <div class="metrics-grid" id="history-grid-${index}"></div>
-            </div>
-          `;
-          historyContainer.appendChild(itemEl);
-
-          renderMetrics(`history-grid-${index}`, item.metrics, item.medians, item.medianLabel);
+      if (playerData.history && playerData.history.length > 0) {
+        // 日付降順（最新が先頭）にソート
+        playerData.history.sort((a, b) => {
+          const timeA = a.timestamp || getTimeFromDateStr(a.date);
+          const timeB = b.timestamp || getTimeFromDateStr(b.date);
+          return timeB - timeA;
         });
 
-      } catch (e) {
-        console.error("Data Load Error:", e);
-        alert("データ読み込み中にエラーが発生しました。");
+        renderLatest(playerData.history[0]);
+        renderTable(playerData.history);
+        setupMetricSelect(playerData.history);
       }
+    } catch(e) {
+      console.error(e);
+      alert("データの読み込みに失敗しました。");
     }
+  }
 
-    // 指標カードの描画処理
-    function renderMetrics(containerId, metrics, medians, medianLabel) {
-      const container = document.getElementById(containerId);
-      if (!container || !metrics) return;
+  function formatValue(val) {
+    if (val === '○' || val === '◯') return '<span class="badge-ok">CLEAR</span>';
+    if (val === '×') return '<span class="badge-ng">NO CLEAR</span>';
+    return val !== undefined && val !== null ? val : '-';
+  }
 
-      container.innerHTML = '';
-      const labelText = medianLabel || '期別中央値';
+  function renderLatest(latest) {
+    document.getElementById('latest-date').innerText = latest.date;
+    let html = '';
+    for (let [key, val] of Object.entries(latest.metrics)) {
+      html += `
+        <div class="metric-item">
+          <span class="metric-label">${key}</span>
+          <span class="metric-value">${formatValue(val)}</span>
+        </div>`;
+    }
+    document.getElementById('latest-metrics').innerHTML = html;
+  }
 
-      Object.keys(metrics).forEach(key => {
-        const val = metrics[key];
-        // 名前やID項目、空データはスキップ
-        if (key.includes('名前') || key.includes('ID') || key.includes('氏名') || val === '' || val === undefined) return;
+  // 全データ一覧の表（テーブル）レンダリング
+  function renderTable(history) {
+    if (!history || history.length === 0) return;
+    
+    // 全項目（キー）を取得
+    const keys = Object.keys(history[0].metrics);
+    
+    let html = `<table class="history-table"><thead><tr><th>回数</th><th>測定日</th>`;
+    keys.forEach(k => { html += `<th>${k}</th>`; });
+    html += `</tr></thead><tbody>`;
 
-        const medianVal = (medians && medians[key] !== undefined) ? medians[key] : '-';
+    // 昇順（古い順）でテーブルを作成
+    const ascHistory = history.slice().reverse();
+    ascHistory.forEach((item, index) => {
+      html += `<tr><td>${index + 1}</td><td>${item.date}</td>`;
+      keys.forEach(k => {
+        const val = item.metrics[k];
+        html += `<td>${formatValue(val)}</td>`;
+      });
+      html += `</tr>`;
+    });
 
-        const box = document.createElement('div');
-        box.className = 'metric-box';
-        box.innerHTML = `
-          <div class="metric-label" title="${key}">${key}</div>
-          <div class="metric-value">${formatVal(val)}</div>
-          <div class="metric-median">${labelText}: ${formatVal(medianVal)}</div>
-        `;
-        container.appendChild(box);
+    html += `</tbody></table>`;
+    document.getElementById('history-table-box').innerHTML = html;
+  }
+
+  function setupMetricSelect(history) {
+    const select = document.getElementById('metricSelect');
+    select.innerHTML = '';
+
+    let numericKeys = new Set();
+    history.forEach(h => {
+      for (let [key, val] of Object.entries(h.metrics)) {
+        if (!isNaN(parseFloat(val)) && isFinite(val)) {
+          numericKeys.add(key);
+        }
+      }
+    });
+
+    numericKeys.forEach(key => {
+      let opt = document.createElement('option');
+      opt.value = key;
+      opt.innerText = key;
+      select.appendChild(opt);
+    });
+
+    updateChart();
+  }
+
+  function updateChart() {
+    const selectedMetric = document.getElementById('metricSelect').value;
+    if (!selectedMetric || !playerData || !playerData.history) return;
+
+    // グラフ用には昇順（古い日付→新しい日付）
+    const chronologicalHistory = playerData.history.slice().sort((a, b) => {
+      const timeA = a.timestamp || getTimeFromDateStr(a.date);
+      const timeB = b.timestamp || getTimeFromDateStr(b.date);
+      return timeA - timeB;
+    });
+
+    const labels = [];
+    const personalData = [];
+    const medianData = [];
+
+    chronologicalHistory.forEach(h => {
+      labels.push(h.date);
+      
+      // 個人数値
+      const pVal = parseFloat(h.metrics[selectedMetric]);
+      personalData.push(!isNaN(pVal) ? pVal : null);
+
+      // 中央値
+      if (h.medians && h.medians[selectedMetric] !== undefined) {
+        const mVal = parseFloat(h.medians[selectedMetric]);
+        medianData.push(!isNaN(mVal) ? mVal : null);
+      } else {
+        medianData.push(null);
+      }
+    });
+
+    renderChart(selectedMetric, labels, personalData, medianData);
+  }
+
+  function renderChart(metricName, labels, personalData, medianData) {
+    const ctx = document.getElementById('growthChart').getContext('2d');
+    if (window.myChart) window.myChart.destroy();
+
+    const datasets = [
+      {
+        label: `${playerData.name} 選手 (記録)`,
+        data: personalData,
+        borderColor: '#FFD700',
+        backgroundColor: 'rgba(255, 215, 0, 0.15)',
+        pointBackgroundColor: '#FFD700',
+        pointBorderColor: '#070D18',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        fill: true,
+        tension: 0.3
+      }
+    ];
+
+    // 中央値データが存在する場合は破線グラフで追加
+    if (medianData.some(v => v !== null)) {
+      datasets.push({
+        label: '期別 中央値',
+        data: medianData,
+        borderColor: '#94A3B8',
+        borderDash: [6, 6],
+        pointBackgroundColor: '#94A3B8',
+        pointRadius: 4,
+        fill: false,
+        tension: 0.3
       });
     }
 
-    function formatVal(val) {
-      if (val === null || val === undefined || val === '') return '-';
-      if (typeof val === 'number') {
-        return Number.isInteger(val) ? val : val.toFixed(1);
+    window.myChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels: labels, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: '#FFFFFF', font: { family: 'Noto Sans JP', weight: 'bold' } }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94A3B8' } },
+          y: { grid: { color: 'rgba(255, 255, 255, 0.08)' }, ticks: { color: '#94A3B8' }, beginAtZero: false }
+        }
       }
-      return val;
-    }
-
-    function toggleAccordion(header) {
-      const parent = header.parentElement;
-      const icon = header.querySelector('.icon');
-      parent.classList.toggle('open');
-      if (parent.classList.contains('open')) {
-        icon.textContent = '−';
-      } else {
-        icon.textContent = '＋';
-      }
-    }
-  </script>
+    });
+  }
+</script>
 </body>
 </html>
