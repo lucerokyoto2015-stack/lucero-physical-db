@@ -205,10 +205,6 @@
       background: rgba(255, 255, 255, 0.02);
     }
 
-    .history-table tbody tr:hover {
-      background: rgba(255, 215, 0, 0.05);
-    }
-
     #loading-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(7, 13, 24, 0.9); backdrop-filter: blur(10px);
@@ -220,11 +216,25 @@
     .loading-text { font-family: 'Orbitron', sans-serif; font-size: 18px; color: var(--lucero-gold); margin-top: 10px; }
 
     @keyframes spinBall { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* デバッグ用スタイリング */
+    #debug-box {
+      background: #000;
+      color: #00ff00;
+      font-family: monospace;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 12px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin-top: 20px;
+      border: 1px solid #00ff00;
+    }
   </style>
 </head>
 <body>
 
-  <!-- ローディング overlay -->
   <div id="loading-overlay" style="display: none;">
     <div class="ball-spinner">⚽</div>
     <div class="loading-text">NOW LOADING...</div>
@@ -254,7 +264,7 @@
       
       <div style="text-align: center; margin-bottom: 24px; position: relative;">
         <h1 id="welcome-msg" style="font-size: 26px; color: #FFFFFF; margin: 0; font-weight: 900;"></h1>
-        <p style="color: var(--text-sub); font-size: 13px; margin-top: 4px;">フィジカル測定データ & パフォーマンス変変</p>
+        <p style="color: var(--text-sub); font-size: 13px; margin-top: 4px;">フィジカル測定データ & パフォーマンス変遷</p>
         <button onclick="logout()" style="position: absolute; right: 0; top: 0; padding: 6px 12px; font-size: 12px;">ログアウト</button>
       </div>
 
@@ -282,6 +292,12 @@
         </div>
       </div>
 
+      <!-- GASから受信したレスポンスのデバッグ出力エリア -->
+      <div class="card" style="border-color: #00ff00;">
+        <h2 style="color: #00ff00;">DEBUG DATA (GAS受信用ログ)</h2>
+        <pre id="debug-box">データを待機中...</pre>
+      </div>
+
     </div>
 
   </div>
@@ -300,20 +316,26 @@
     return isNaN(t) ? 0 : t;
   }
 
-  // データオブジェクトから「測定項目のキーと値のペア」を安全に取り出すヘルパー関数
-  function extractMetricsObj(item) {
-    if (item.metrics && typeof item.metrics === 'object') {
-      return item.metrics;
-    }
-    // metricsプロパティがない場合、dateやmedians等の基本キー以外のものを測定項目とみなす
-    const res = {};
-    const excludeKeys = ['date', 'medians', '回数', '測定日', 'name', 'userId', 'id'];
-    Object.keys(item).forEach(k => {
-      if (!excludeKeys.includes(k)) {
-        res[k] = item[k];
+  // 再帰的に全てのキーと値を抽出する処理
+  function extractAllKeyValuePairs(obj, prefix = '') {
+    let result = {};
+    if (!obj || typeof obj !== 'object') return result;
+
+    for (let key in obj) {
+      if (!obj.hasOwnProperty(key)) continue;
+      
+      // 除外するキー
+      if (['date', 'medians', '回数', '測定日', 'name', 'userId', 'id', 'action', 'success'].includes(key)) continue;
+
+      let val = obj[key];
+      if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
+        // ネストされたオブジェクトを展開
+        Object.assign(result, extractAllKeyValuePairs(val, key + '_'));
+      } else {
+        result[key] = val;
       }
-    });
-    return res;
+    }
+    return result;
   }
 
   async function handleLogin() {
@@ -361,7 +383,8 @@
       const res = await fetch(`${GAS_URL}?action=getData&userId=${encodeURIComponent(userId)}`);
       playerData = await res.json();
 
-      console.log("【デバッグ】GAS取得データ:", playerData);
+      // デバッグボックスに通信結果をリアルタイム表示
+      document.getElementById('debug-box').innerText = JSON.stringify(playerData, null, 2);
 
       if (playerData.error) {
         alert(playerData.error);
@@ -379,6 +402,7 @@
       }
     } catch(e) {
       console.error(e);
+      document.getElementById('debug-box').innerText = "エラー: " + e.toString();
       alert("データの読み込みに失敗しました");
     }
   }
@@ -398,7 +422,7 @@
   function renderLatest(latest) {
     document.getElementById('latest-date').innerText = latest.date || '-';
     let html = '';
-    const metrics = extractMetricsObj(latest);
+    const metrics = extractAllKeyValuePairs(latest);
 
     for (let [key, val] of Object.entries(metrics)) {
       html += `
@@ -413,10 +437,9 @@
   function renderTable(history) {
     if (!history || history.length === 0) return;
     
-    // 全履歴から存在する全ての測定項目のキー（名前）を収集
     const allKeysSet = new Set();
     history.forEach(item => {
-      const metrics = extractMetricsObj(item);
+      const metrics = extractAllKeyValuePairs(item);
       Object.keys(metrics).forEach(k => allKeysSet.add(k));
     });
     const keys = Array.from(allKeysSet);
@@ -428,7 +451,7 @@
     const ascHistory = history.slice().sort((a, b) => getTimeFromDateStr(a.date) - getTimeFromDateStr(b.date));
     
     ascHistory.forEach((item, index) => {
-      const metrics = extractMetricsObj(item);
+      const metrics = extractAllKeyValuePairs(item);
       html += `<tr><td>第 ${index + 1} 回</td><td>${item.date || '-'}</td>`;
       keys.forEach(k => {
         const val = metrics[k];
@@ -447,7 +470,7 @@
 
     let numericKeys = new Set();
     history.forEach(h => {
-      const metrics = extractMetricsObj(h);
+      const metrics = extractAllKeyValuePairs(h);
       for (let [key, val] of Object.entries(metrics)) {
         if (val !== null && val !== undefined && val !== '-' && !String(val).includes('#')) {
           const num = parseFloat(val);
@@ -481,7 +504,7 @@
     chronologicalHistory.forEach(h => {
       labels.push(h.date || '-');
       
-      const metrics = extractMetricsObj(h);
+      const metrics = extractAllKeyValuePairs(h);
       const pRaw = metrics[selectedMetric];
       const pVal = parseFloat(pRaw);
       personalData.push((pRaw !== null && pRaw !== undefined && pRaw !== '-' && !isNaN(pVal)) ? Math.round(pVal * 10) / 10 : null);
