@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LUCERO KYOTO | Physical Analytics</title>
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -59,7 +60,7 @@
     }
 
     .container {
-      max-width: 850px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 20px;
     }
@@ -123,11 +124,10 @@
     }
 
     button {
-      width: 100%;
-      padding: 14px;
+      padding: 12px 20px;
       background: linear-gradient(135deg, var(--lucero-gold) 0%, var(--lucero-gold-dark) 100%);
       color: #070D18;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 800;
       border: none;
       border-radius: 8px;
@@ -142,39 +142,16 @@
       box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
     }
 
-    details {
-      background: rgba(11, 25, 44, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-      margin-bottom: 12px;
-      padding: 14px 16px;
-    }
-
-    summary {
-      cursor: pointer;
-      font-weight: 700;
-      color: var(--lucero-gold);
-      font-size: 15px;
-      list-style: none;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    summary::-webkit-details-marker { display: none; }
-    summary::after { content: '＋'; font-size: 16px; color: var(--text-sub); }
-    details[open] summary::after { content: '－'; color: var(--lucero-gold); }
-
     .metric-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       gap: 12px;
       margin-top: 14px;
     }
 
     .metric-item {
       background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 8px;
       padding: 10px 12px;
     }
@@ -184,12 +161,48 @@
 
     .badge-ok {
       color: #070D18; background: var(--lucero-gold);
-      padding: 2px 8px; border-radius: 4px; font-weight: 900;
+      padding: 2px 8px; border-radius: 4px; font-weight: 900; font-size: 12px;
     }
 
     .badge-ng {
       color: #94A3B8; background: rgba(255, 255, 255, 0.1);
-      padding: 2px 8px; border-radius: 4px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 12px;
+    }
+
+    /* 全データ一覧テーブルのスタイル */
+    .data-table-container {
+      overflow-x: auto;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      color: #FFFFFF;
+      text-align: center;
+    }
+
+    .history-table th, .history-table td {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 10px 12px;
+      white-space: nowrap;
+    }
+
+    .history-table th {
+      background: rgba(255, 215, 0, 0.15);
+      color: var(--lucero-gold);
+      font-weight: 700;
+    }
+
+    .history-table tbody tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .history-table tbody tr:hover {
+      background: rgba(255, 215, 0, 0.05);
     }
 
     #loading-overlay {
@@ -199,8 +212,8 @@
       z-index: 9999;
     }
 
-    .ball-spinner { font-size: 56px; animation: spinBall 1.2s linear infinite; margin-bottom: 16px; }
-    .loading-text { font-family: 'Orbitron', sans-serif; font-size: 18px; color: var(--lucero-gold); }
+    .ball-spinner { font-size: 56px; animation: spinBall 1.2s linear infinite; }
+    .loading-text { font-family: 'Orbitron', sans-serif; font-size: 18px; color: var(--lucero-gold); margin-top: 10px; }
 
     @keyframes spinBall { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .hidden { display: none !important; }
@@ -220,36 +233,41 @@
 
   <div class="container">
     
+    <!-- ログイン画面 -->
     <div id="login-view" class="card" style="max-width: 400px; margin: 40px auto;">
       <h2 style="justify-content: center;">ATHLETE LOGIN</h2>
       <div class="input-group">
-        <input type="text" id="userId" placeholder="ユーザーID (選手ID)">
+        <input type="text" id="userId" placeholder="ユーザーID (または選手名)">
       </div>
       <div class="input-group">
         <input type="password" id="password" placeholder="パスワード">
       </div>
-      <button id="loginBtn" onclick="handleLogin()">ログイン</button>
+      <button style="width:100%;" onclick="handleLogin()">ログイン</button>
     </div>
 
+    <!-- ダッシュボード本体 -->
     <div id="dashboard" class="hidden">
       
       <div style="text-align: center; margin-bottom: 24px;">
-        <h1 id="welcome-msg" style="font-size: 24px; color: #FFFFFF; margin: 0; font-weight: 900;"></h1>
+        <h1 id="welcome-msg" style="font-size: 26px; color: #FFFFFF; margin: 0; font-weight: 900;"></h1>
         <p style="color: var(--text-sub); font-size: 13px; margin-top: 4px;">フィジカル測定データ & パフォーマンス変遷</p>
       </div>
 
+      <!-- 最新記録 -->
       <div class="card">
-        <h2>LATEST RECORD (<span id="latest-date" style="color: var(--lucero-gold);">-</span>)</h2>
+        <h2>LATEST RECORD ( <span id="latest-date" style="color: var(--lucero-gold);">-</span> )</h2>
         <div id="latest-metrics" class="metric-grid"></div>
       </div>
 
+      <!-- 全データ一覧テーブル -->
       <div class="card">
-        <h2>MEASUREMENT HISTORY</h2>
-        <div id="history-accordion"></div>
+        <h2>MEASUREMENT HISTORY (全データ一覧)</h2>
+        <div id="history-table-box" class="data-table-container"></div>
       </div>
 
+      <!-- パフォーマンスチャート -->
       <div class="card">
-        <h2>PERFORMANCE CHART (個人 vs 中央値)</h2>
+        <h2>PERFORMANCE CHART (個人値 vs 中央値)</h2>
         <div class="input-group">
           <label for="metricSelect" style="font-size: 12px; color: var(--text-sub); display: block; margin-bottom: 6px;">表示項目を選択</label>
           <select id="metricSelect" onchange="updateChart()"></select>
@@ -281,8 +299,8 @@
     const userId = document.getElementById('userId').value;
     const password = document.getElementById('password').value;
 
-    if(!userId || !password) {
-      alert("IDとパスワードを入力してください");
+    if(!userId) {
+      alert("IDを入力してください");
       return;
     }
 
@@ -303,7 +321,7 @@
         alert(result.message);
       }
     } catch(e) {
-      alert("通信エラーが発生しました");
+      alert("ログイン処理中に通信エラーが発生しました");
     } finally {
       hideLoading();
     }
@@ -311,7 +329,7 @@
 
   async function loadDashboardData(userId) {
     try {
-      const res = await fetch(`${GAS_URL}?action=getData&userId=${userId}`);
+      const res = await fetch(`${GAS_URL}?action=getData&userId=${encodeURIComponent(userId)}`);
       playerData = await res.json();
 
       if (playerData.error) {
@@ -322,15 +340,11 @@
       document.getElementById('welcome-msg').innerText = `${playerData.name} 選手`;
 
       if (playerData.history && playerData.history.length > 0) {
-        // 日付の降順（最新日付が先頭[0]）にソート
-        playerData.history.sort((a, b) => {
-          const timeA = a.timestamp || getTimeFromDateStr(a.date);
-          const timeB = b.timestamp || getTimeFromDateStr(b.date);
-          return timeB - timeA;
-        });
+        // 最新の日付順（降順）にソート
+        playerData.history.sort((a, b) => getTimeFromDateStr(b.date) - getTimeFromDateStr(a.date));
 
         renderLatest(playerData.history[0]);
-        renderAccordion(playerData.history);
+        renderTable(playerData.history);
         setupMetricSelect(playerData.history);
       }
     } catch(e) {
@@ -342,7 +356,7 @@
   function formatValue(val) {
     if (val === '○' || val === '◯') return '<span class="badge-ok">CLEAR</span>';
     if (val === '×') return '<span class="badge-ng">NO CLEAR</span>';
-    return val !== undefined && val !== null && val !== '' ? val : '-';
+    return (val !== undefined && val !== null && val !== '') ? val : '-';
   }
 
   function renderLatest(latest) {
@@ -358,20 +372,35 @@
     document.getElementById('latest-metrics').innerHTML = html;
   }
 
-  function renderAccordion(history) {
-    let html = '';
+  // ★全データ一覧テーブルのレンダリング関数
+  function renderTable(history) {
+    if (!history || history.length === 0) return;
+    
+    // 全データから測定項目（列ヘッダー）のリストを収集
+    const allKeysSet = new Set();
     history.forEach(item => {
-      html += `<details><summary>${item.date}</summary><div class="metric-grid">`;
-      for (let [key, val] of Object.entries(item.metrics)) {
-        html += `
-          <div class="metric-item">
-            <span class="metric-label">${key}</span>
-            <span class="metric-value">${formatValue(val)}</span>
-          </div>`;
-      }
-      html += `</div></details>`;
+      Object.keys(item.metrics).forEach(k => allKeysSet.add(k));
     });
-    document.getElementById('history-accordion').innerHTML = html;
+    const keys = Array.from(allKeysSet);
+
+    let html = `<table class="history-table"><thead><tr><th>回数</th><th>測定日</th>`;
+    keys.forEach(k => { html += `<th>${k}</th>`; });
+    html += `</tr></thead><tbody>`;
+
+    // 測定の過去（第1回〜）から順に並べて表示
+    const ascHistory = history.slice().sort((a, b) => getTimeFromDateStr(a.date) - getTimeFromDateStr(b.date));
+    
+    ascHistory.forEach((item, index) => {
+      html += `<tr><td>第 ${index + 1} 回</td><td>${item.date}</td>`;
+      keys.forEach(k => {
+        const val = item.metrics[k];
+        html += `<td>${formatValue(val)}</td>`;
+      });
+      html += `</tr>`;
+    });
+
+    html += `</tbody></table>`;
+    document.getElementById('history-table-box').innerHTML = html;
   }
 
   function setupMetricSelect(history) {
@@ -401,12 +430,8 @@
     const selectedMetric = document.getElementById('metricSelect').value;
     if (!selectedMetric || !playerData || !playerData.history) return;
 
-    // 昇順（古い日付→新しい日付）
-    const chronologicalHistory = playerData.history.slice().sort((a, b) => {
-      const timeA = a.timestamp || getTimeFromDateStr(a.date);
-      const timeB = b.timestamp || getTimeFromDateStr(b.date);
-      return timeA - timeB;
-    });
+    // 時系列（古い日付 → 新しい日付）でソート
+    const chronologicalHistory = playerData.history.slice().sort((a, b) => getTimeFromDateStr(a.date) - getTimeFromDateStr(b.date));
 
     const labels = [];
     const personalData = [];
@@ -414,12 +439,10 @@
 
     chronologicalHistory.forEach(h => {
       labels.push(h.date);
-
-      // 個人数値のパース
+      
       const pVal = parseFloat(h.metrics[selectedMetric]);
       personalData.push(!isNaN(pVal) ? pVal : null);
 
-      // スプレッドシートの中央値（10期中央値）のパース
       if (h.medians && h.medians[selectedMetric] !== undefined) {
         const mVal = parseFloat(h.medians[selectedMetric]);
         medianData.push(!isNaN(mVal) ? mVal : null);
@@ -437,7 +460,7 @@
 
     const datasets = [
       {
-        label: `${playerData.name} 選手`,
+        label: `${playerData.name} 選手 (記録)`,
         data: personalData,
         borderColor: '#FFD700',
         backgroundColor: 'rgba(255, 215, 0, 0.15)',
@@ -446,23 +469,20 @@
         pointBorderWidth: 2,
         pointRadius: 5,
         fill: true,
-        tension: 0.3,
-        spanGaps: true // データが空（未測定）の箇所をスキップして線を繋ぐ
+        tension: 0.3
       }
     ];
 
-    // 中央値データが存在する場合は破線グラフとして追加
     if (medianData.some(v => v !== null)) {
       datasets.push({
-        label: '10期中央値',
+        label: '期別 中央値',
         data: medianData,
         borderColor: '#94A3B8',
         borderDash: [6, 6],
         pointBackgroundColor: '#94A3B8',
         pointRadius: 4,
         fill: false,
-        tension: 0.3,
-        spanGaps: true
+        tension: 0.3
       });
     }
 
