@@ -8,6 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   
+  <!-- Chart.js 読み込み -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root {
       --bg-dark: #0B121E;
@@ -33,7 +36,7 @@
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 30px 16px;
     }
@@ -214,51 +217,63 @@
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .accordion-item {
-      background: var(--bg-item);
+    /* テーブルデザイン */
+    .table-container {
+      overflow-x: auto;
       border: 1px solid var(--border-item);
       border-radius: 10px;
-      margin-bottom: 12px;
-      overflow: hidden;
     }
 
-    .accordion-header {
-      padding: 18px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
-      font-size: 16px;
-      font-weight: 800;
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .history-table th, .history-table td {
+      padding: 12px 16px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-item);
+    }
+
+    .history-table th {
+      background: rgba(255, 215, 0, 0.08);
       color: var(--lucero-gold);
-      user-select: none;
+      font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
+      font-weight: 700;
     }
 
-    .accordion-header:hover {
+    .history-table tr:hover {
       background: rgba(255, 255, 255, 0.02);
     }
 
-    .accordion-icon {
-      font-size: 18px;
-      color: var(--text-sub);
-      transition: transform 0.3s ease;
+    /* グラフ配置エリア */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
     }
 
-    .accordion-item.active .accordion-icon {
-      transform: rotate(45deg);
+    @media (max-width: 768px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
-    .accordion-body {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease, padding 0.3s ease;
-      padding: 0 20px;
+    .chart-card {
+      background: var(--bg-item);
+      border: 1px solid var(--border-item);
+      border-radius: 10px;
+      padding: 16px;
     }
 
-    .accordion-item.active .accordion-body {
-      padding: 10px 20px 20px 20px;
-      max-height: 1000px;
+    .chart-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--lucero-gold);
+      margin-bottom: 12px;
+      text-align: center;
     }
 
     #loading {
@@ -295,6 +310,7 @@
 
     <!-- DASHBOARD -->
     <div id="app-content" style="display: none;">
+      <!-- LATEST RECORD -->
       <div class="card">
         <h2 class="section-title">
           LATEST RECORD ( <span id="latest-date" class="date-highlight">--</span> )
@@ -302,16 +318,38 @@
         <div id="latest-grid" class="metric-grid"></div>
       </div>
 
+      <!-- HISTORY TABLE -->
       <div class="card">
         <h2 class="section-title">MEASUREMENT HISTORY</h2>
-        <div id="history-accordion"></div>
+        <div class="table-container">
+          <table class="history-table" id="history-table">
+            <thead id="history-thead"></thead>
+            <tbody id="history-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ANALYTICS CHARTS -->
+      <div class="card">
+        <h2 class="section-title">PERFORMANCE TRENDS</h2>
+        <div id="charts-container" class="charts-grid"></div>
       </div>
     </div>
   </div>
 
   <script>
-    // ★ ここをご自身の GAS ウェブアプリ URL（末尾 /exec）に打ち換えてください
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby_butvXxqK1Jszi37nZE97DVATb8IXVNT3ncGeuqBIrJARWk2vImctf7FF-dFVaX99/exec";
+
+    // グラフ表示対象の項目定義（検索キーワードとタイトルのマッピング）
+    const TARGET_GRAPH_METRICS = [
+      { keyKeywords: ["身長"], title: "身長 (cm)" },
+      { keyKeywords: ["体重"], title: "体重 (kg)" },
+      { keyKeywords: ["三段跳び", "三段跳"], title: "三段跳び (m)" },
+      { keyKeywords: ["400m", "400"], title: "20mシャトル 400m" },
+      { keyKeywords: ["800m", "800"], title: "20mシャトル 800m" }
+    ];
+
+    let chartInstances = [];
 
     function formatValueHtml(val) {
       if (val === undefined || val === null || val === '') return '-';
@@ -340,11 +378,6 @@
       return null;
     }
 
-    function toggleAccordion(element) {
-      const item = element.parentElement;
-      item.classList.toggle('active');
-    }
-
     function loadData(userId, password) {
       const loginView = document.getElementById('login-view');
       const loading = document.getElementById('loading');
@@ -353,10 +386,10 @@
       if (loginView) loginView.style.display = 'none';
       if (loading) loading.style.display = 'block';
 
-      if (!GAS_URL || GAS_URL === "YOUR_GAS_DEPLOY_URL_HERE" || !GAS_URL.startsWith("http")) {
+      if (!GAS_URL || !GAS_URL.startsWith("http")) {
         if (loading) loading.style.display = 'none';
         if (loginView) loginView.style.display = 'block';
-        if (loginError) loginError.textContent = 'GAS_URLが正しく設定されていません。コード内のURLを確認してください。';
+        if (loginError) loginError.textContent = 'GAS_URLの設定を確認してください。';
         return;
       }
 
@@ -377,7 +410,7 @@
           console.error('Fetch Error:', err);
           if (loading) loading.style.display = 'none';
           if (loginView) loginView.style.display = 'block';
-          if (loginError) loginError.textContent = '通信エラーが発生しました。GAS URLやアクセス権限（「全員」設定）を確認してください。';
+          if (loginError) loginError.textContent = '通信エラーが発生しました。アクセス権限設定やネットワークを確認してください。';
         });
     }
 
@@ -407,6 +440,7 @@
       });
       const headerList = Array.from(allHeaders);
 
+      // 1. LATEST RECORD (GRID)
       const latestGrid = document.getElementById('latest-grid');
       if (latestGrid) {
         latestGrid.innerHTML = '';
@@ -422,40 +456,158 @@
         });
       }
 
-      const historyAccordion = document.getElementById('history-accordion');
-      if (historyAccordion) {
-        historyAccordion.innerHTML = '';
-        const reverseHistory = history.slice().reverse();
+      // 2. MEASUREMENT HISTORY (TABLE)
+      renderTable(history, headerList);
 
-        reverseHistory.forEach((item) => {
-          const accordionItem = document.createElement('div');
-          accordionItem.className = 'accordion-item';
+      // 3. CHARTS
+      renderCharts(history, headerList, data.medians || {});
+    }
 
-          let gridHtml = '<div class="metric-grid">';
-          headerList.forEach(header => {
-            const val = item.metrics[header];
-            gridHtml += `
-              <div class="metric-item">
-                <div class="metric-label">${header}</div>
-                <div class="metric-value-container">${formatValueHtml(val)}</div>
-              </div>
-            `;
-          });
-          gridHtml += '</div>';
+    function renderTable(history, headerList) {
+      const thead = document.getElementById('history-thead');
+      const tbody = document.getElementById('history-tbody');
+      
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
 
-          accordionItem.innerHTML = `
-            <div class="accordion-header" onclick="toggleAccordion(this)">
-              <span>${item.date}</span>
-              <span class="accordion-icon">+</span>
-            </div>
-            <div class="accordion-body">
-              ${gridHtml}
-            </div>
-          `;
+      // Header Row
+      let trHead = document.createElement('tr');
+      let thDate = document.createElement('th');
+      thDate.textContent = '測定日';
+      trHead.appendChild(thDate);
 
-          historyAccordion.appendChild(accordionItem);
+      headerList.forEach(header => {
+        let th = document.createElement('th');
+        th.textContent = header;
+        trHead.appendChild(th);
+      });
+      thead.appendChild(trHead);
+
+      // Body Rows (最新順に表示)
+      const reverseHistory = history.slice().reverse();
+      reverseHistory.forEach(item => {
+        let tr = document.createElement('tr');
+        
+        let tdDate = document.createElement('td');
+        tdDate.style.fontWeight = '700';
+        tdDate.style.color = '#FFD700';
+        tdDate.textContent = item.date;
+        tr.appendChild(tdDate);
+
+        headerList.forEach(header => {
+          let td = document.createElement('td');
+          const val = item.metrics[header];
+          td.innerHTML = formatValueHtml(val);
+          tr.appendChild(td);
         });
-      }
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderCharts(history, headerList, mediansData) {
+      const container = document.getElementById('charts-container');
+      container.innerHTML = '';
+
+      // 既存チャートの破棄
+      chartInstances.forEach(chart => chart.destroy());
+      chartInstances = [];
+
+      const dates = history.map(h => h.date);
+
+      TARGET_GRAPH_METRICS.forEach(target => {
+        // ヘッダー名の一致確認
+        const matchedHeader = headerList.find(h => 
+          target.keyKeywords.some(kw => h.toLowerCase().includes(kw.toLowerCase()))
+        );
+
+        if (!matchedHeader) return;
+
+        // 個人データの抽出
+        const userValues = history.map(h => {
+          const val = h.metrics[matchedHeader];
+          return typeof val === 'number' ? val : parseFloat(val) || null;
+        });
+
+        // 同期生中央値データの抽出 (GAS側から送られてくる場合の対応)
+        const medianValues = history.map((h, idx) => {
+          if (mediansData && mediansData[h.date] && mediansData[h.date][matchedHeader] !== undefined) {
+            return mediansData[h.date][matchedHeader];
+          }
+          return null;
+        });
+
+        // チャート用DOMの作成
+        const chartCard = document.createElement('div');
+        chartCard.className = 'chart-card';
+        
+        const title = document.createElement('div');
+        title.className = 'chart-title';
+        title.textContent = matchedHeader;
+        
+        const canvas = document.createElement('canvas');
+        chartCard.appendChild(title);
+        chartCard.appendChild(canvas);
+        container.appendChild(chartCard);
+
+        // Chart.js 描画
+        const ctx = canvas.getContext('2d');
+        const datasets = [
+          {
+            label: '本人成績',
+            data: userValues,
+            borderColor: '#FFD700',
+            backgroundColor: 'rgba(255, 215, 0, 0.2)',
+            borderWidth: 2,
+            tension: 0.2,
+            pointRadius: 4,
+            pointBackgroundColor: '#FFD700'
+          }
+        ];
+
+        // 中央値が存在する場合は線を追加
+        if (medianValues.some(v => v !== null)) {
+          datasets.push({
+            label: '同期生中央値',
+            data: medianValues,
+            borderColor: '#38BDF8',
+            borderDash: [5, 5],
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            tension: 0.2,
+            pointRadius: 3,
+            pointBackgroundColor: '#38BDF8'
+          });
+        }
+
+        const chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: dates,
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                labels: { color: '#94A3B8', font: { family: 'Noto Sans JP', size: 11 } }
+              }
+            },
+            scales: {
+              x: {
+                ticks: { color: '#94A3B8' },
+                grid: { color: 'rgba(255, 255, 255, 0.05)' }
+              },
+              y: {
+                ticks: { color: '#94A3B8' },
+                grid: { color: 'rgba(255, 255, 255, 0.05)' }
+              }
+            }
+          }
+        });
+
+        chartInstances.push(chart);
+      });
     }
   </script>
 </body>
